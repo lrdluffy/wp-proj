@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     # 'django_filters',
     'accounts',
-    # 'core',
+    'core',
     # 'complaints',
     # 'evidence',
     # 'witnesses',
