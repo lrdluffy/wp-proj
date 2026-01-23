@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     # 'django_filters',
     'accounts',
     'core',
-    # 'complaints',
+    'complaints',
     # 'evidence',
     # 'witnesses',
     # 'suspects',
