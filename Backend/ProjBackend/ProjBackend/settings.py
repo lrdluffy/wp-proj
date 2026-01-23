@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'complaints',
     'evidence',
     'witnesses',
-    # 'suspects',
+    'suspects',
     # 'trials',
     # 'rewards',
 ]
