@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     # 'django_filters',
-    # 'accounts',
+    'accounts',
     # 'core',
     # 'complaints',
     # 'evidence',
@@ -160,4 +160,4 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # Custom User Model
-# AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'accounts.User'
