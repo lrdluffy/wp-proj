@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 import { CardSkeleton } from '../components/Skeleton';
 import { AlertTriangle, MapPin, Clock, User } from 'lucide-react';
 import type { Case } from '../types';
-import { format } from 'date-fns';
+import { formatDateTime } from '../utils/format';
 
 const Pursuit: React.FC = () => {
   const [pursuitCases, setPursuitCases] = useState<Case[]>([]);
@@ -107,7 +107,7 @@ const Pursuit: React.FC = () => {
 
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <Clock className="h-4 w-4" />
-                  <span>Reported: {format(new Date(caseItem.reported_at), 'MMM dd, yyyy HH:mm')}</span>
+                  <span>Reported: {formatDateTime(caseItem.reported_at)}</span>
                 </div>
 
                 {caseItem.assigned_to_detail && (

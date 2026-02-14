@@ -3,7 +3,7 @@ import { apiService } from '../services/api';
 import { TableSkeleton } from '../components/Skeleton';
 import { FileText, Upload, Download, Search } from 'lucide-react';
 import type { Case } from '../types';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/format';
 
 const Documents: React.FC = () => {
   const [cases, setCases] = useState<Case[]>([]);
@@ -111,7 +111,7 @@ const Documents: React.FC = () => {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {format(new Date(caseItem.created_at), 'MMM dd, yyyy')}
+                      {formatDate(caseItem.created_at)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <span className="flex items-center space-x-1">

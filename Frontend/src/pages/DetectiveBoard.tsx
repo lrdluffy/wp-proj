@@ -5,7 +5,7 @@ import { apiService } from '../services/api';
 import { CardSkeleton } from '../components/Skeleton';
 import { Shield, User, FileText, Clock } from 'lucide-react';
 import type { Case, User as UserType } from '../types';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/format';
 
 const DetectiveBoard: React.FC = () => {
   const { user } = useAuth();
@@ -124,7 +124,7 @@ const DetectiveBoard: React.FC = () => {
                     <div className="mt-2 flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
-                        <span>Reported: {format(new Date(caseItem.reported_at), 'MMM dd, yyyy')}</span>
+                        <span>Reported: {formatDate(caseItem.reported_at)}</span>
                       </div>
                       {caseItem.assigned_to_detail && (
                         <div className="flex items-center space-x-1">

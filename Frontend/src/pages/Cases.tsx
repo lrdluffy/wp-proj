@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 import { TableSkeleton } from '../components/Skeleton';
 import { Plus, Search, Filter } from 'lucide-react';
 import type { Case, CaseStatus, CrimeLevel } from '../types';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/format';
 
 const Cases: React.FC = () => {
   const [cases, setCases] = useState<Case[]>([]);
@@ -214,7 +214,7 @@ const Cases: React.FC = () => {
                       {caseItem.assigned_to_detail?.full_name || 'Unassigned'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {format(new Date(caseItem.reported_at), 'MMM dd, yyyy')}
+                      {formatDate(caseItem.reported_at)}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                       <Link

@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 import { TableSkeleton } from '../components/Skeleton';
 import { Search, Filter, AlertCircle } from 'lucide-react';
 import type { Complaint, ComplaintStatus } from '../types';
-import { format } from 'date-fns';
+import { formatDate } from '../utils/format';
 
 const Complaints: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -165,7 +165,7 @@ const Complaints: React.FC = () => {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                      {format(new Date(complaint.incident_date), 'MMM dd, yyyy')}
+                      {formatDate(complaint.incident_date)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{complaint.incident_location}</td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
