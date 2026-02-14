@@ -26,7 +26,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900 text-white shadow-lg">
+      <aside className="fixed left-0 top-0 z-50 h-full w-64 bg-gray-900 text-white shadow-lg">
         <div className="flex h-full flex-col">
           <div className="flex h-16 items-center justify-center border-b border-gray-800">
             <h1 className="text-xl font-bold">Police System</h1>
@@ -139,8 +139,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </aside>
 
+      {/* Mobile menu button */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-40 p-4">
+        <h1 className="text-xl font-bold text-gray-900">Police System</h1>
+      </div>
+
       {/* Main content */}
-      <div className="ml-64">
+      <div className="lg:ml-64 pt-16 lg:pt-0">
         <header className="sticky top-0 z-10 bg-white shadow-sm">
           <div className="flex h-16 items-center justify-between px-6">
             <h2 className="text-xl font-semibold text-gray-800">
