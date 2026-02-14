@@ -1,73 +1,94 @@
-# React + TypeScript + Vite
+# Police Case Management System - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React + TypeScript frontend application for the Police Case Management System, built with Vite, TailwindCSS, and React Router.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🏠 **Home Page** - Landing page with system overview
+- 🔐 **Authentication** - Login and registration with role-based access
+- 📊 **Dashboard** - Overview of cases, complaints, and statistics
+- 📁 **Case Management** - View, filter, and manage police cases
+- 🚨 **Complaints** - Review and process citizen complaints
+- 🕵️ **Detective Board** - Manage active investigations
+- ⚡ **Under Intense Pursuit** - High-priority cases requiring immediate attention
+- 📈 **Reports** - Analytics and statistics
+- 📄 **Documents** - Document registration and review
+- 👥 **Admin Panel** - User management (Chief/Captain only)
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **TailwindCSS** - Utility-first CSS framework
+- **React Router** - Client-side routing
+- **Axios** - HTTP client
+- **Vitest** - Testing framework
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 20+ 
+- npm or yarn
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env
+
+# Update .env with your API URL
+VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Start development server
+npm run dev
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Run tests
+npm test
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
+
+## Project Structure
+
+```
+wp-front/
+├── src/
+│   ├── components/     # Reusable components
+│   ├── pages/          # Page components
+│   ├── contexts/       # React contexts (Auth)
+│   ├── services/       # API services
+│   ├── types/          # TypeScript types
+│   ├── utils/          # Utility functions
+│   ├── hooks/          # Custom React hooks
+│   └── test/           # Test files
+└── public/             # Static assets
+```
+
+## Environment Variables
+
+- `VITE_API_BASE_URL` - Backend API base URL (default: http://localhost:8000/api)
+
+## Testing
+
+The project includes unit tests using Vitest and React Testing Library:
+
+```bash
+npm test
+```
+
+## License
+
+This project is part of a web programming course assignment.
