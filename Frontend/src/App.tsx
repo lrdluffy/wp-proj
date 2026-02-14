@@ -1,11 +1,20 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
 
 // Pages
 import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Cases from './pages/Cases';
 import Complaints from './pages/Complaints';
+import DetectiveBoard from './pages/DetectiveBoard';
+import Pursuit from './pages/Pursuit';
+import Reports from './pages/Reports';
+import Documents from './pages/Documents';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -13,8 +22,88 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/cases" element={<Cases />} />
-          <Route path="/complaints" element={<Complaints />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cases"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Cases />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/complaints"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Complaints />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/detective-board"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DetectiveBoard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pursuit"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Pursuit />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Reports />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Documents />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Admin />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
