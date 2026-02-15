@@ -39,7 +39,13 @@ class ApiService {
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          // Only redirect if not already on login/register/home page
+          const currentPath = window.location.pathname;
+          if (currentPath !== '/' && 
+              !currentPath.includes('/login') && 
+              !currentPath.includes('/register')) {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(error);
       }
