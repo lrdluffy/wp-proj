@@ -53,7 +53,7 @@ class IsPoliceChiefOrHigher(permissions.BasePermission):
         return request.user.role == Role.POLICE_CHIEF
     
     
-class CanHandleCrimeLevel(permissions.BasePermissions):
+class CanHandleCrimeLevel(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if not request.user or not request.user.is_authenticated:
             return False

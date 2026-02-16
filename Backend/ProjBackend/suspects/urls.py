@@ -1,8 +1,8 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from suspects.views import SuspectViewSet
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'suspects', SuspectViewSet, basename='suspect')
 
 urlpatterns = [

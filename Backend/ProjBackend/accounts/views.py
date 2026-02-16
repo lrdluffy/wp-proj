@@ -28,12 +28,12 @@ class UserViewSet(viewsets.ModelViewSet):
             return [IsCaptainOrHigher()]
         return [IsAuthenticated()]
 
-    @action(detail=False, method=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def me(self, request):
         serializer = UserDetailsSerializer(request.user)
         return Response(serializer.data)
     
-    @action(detail=False, method=['post'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -45,7 +45,7 @@ class UserViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, method=['post'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
         username = request.data.get('username')
         password = request.data.get('password')

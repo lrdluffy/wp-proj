@@ -1,8 +1,8 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from witnesses.views import WitnessStatementViewSet
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'witness-statements', WitnessStatementViewSet, basename='witness-statement')
 
 urlpatterns = [
