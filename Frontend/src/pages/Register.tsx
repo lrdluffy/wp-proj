@@ -28,31 +28,32 @@ const Register: React.FC = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
 
-    if (formData.password !== formData.password2) {
-      setError('Passwords do not match');
-      return;
-    }
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
 
-    setLoading(true);
+  if (formData.password !== formData.password2) {
+    setError('Passwords do not match');
+    return;
+  }
 
-    try {
-      await register({
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        password2: formData.password2,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        role: formData.role,
-        badge_number: formData.badge_number || undefined,
-        phone_number: formData.phone_number || undefined,
-      });
-      navigate('/dashboard');
-    } catch (err: any) {
+  setLoading(true);
+
+  try {
+    await register({
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      password_confirm: formData.password2,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      role: formData.role,
+      badge_number: formData.badge_number || undefined,
+      phone_number: formData.phone_number || undefined,
+    });
+    navigate('/dashboard');
+  } catch (err: any) {
       const errorMessage = err.response?.data;
       if (typeof errorMessage === 'object') {
         const firstError = Object.values(errorMessage)[0];

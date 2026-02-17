@@ -17,14 +17,16 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action == 'retrieve' or self.action == 'update':
+        if self.action == 'register' or self.action == 'create':
+            return UserRegistrationSerializer
+        if self.action in ['retrieve', 'update', 'me']:
             return UserDetailsSerializer
         return UserSerializer
-    
+
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action in ['register', 'login', 'create']:
             return [AllowAny()]
-        elif self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ['update', 'partial_update', 'destroy']:
             return [IsCaptainOrHigher()]
         return [IsAuthenticated()]
 
