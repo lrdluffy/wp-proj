@@ -1,8 +1,7 @@
 from rest_framework import serializers
-
+import uuid
 from accounts.serializers import UserSerializer
 from core.models import Case, CrimeScene
-
 
 class CaseSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -22,7 +21,6 @@ class CaseSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-
 class CaseCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Case
@@ -30,7 +28,12 @@ class CaseCreateSerializer(serializers.ModelSerializer):
             'case_number', 'title', 'description', 'crime_level',
             'status', 'assigned_to', 'reported_at', 'location', 'notes'
         ]
+        read_only_fields = ['case_number']
 
+    def create(self, validated_data):
+        if not validated_data.get('case_number'):
+            validated_data['case_number'] = f"CASE-{uuid.uuid4().hex[:8].upper()}"
+        return super().create(validated_data)
 
 class CrimeSceneSerializer(serializers.ModelSerializer):
     case_detail = CaseSerializer(source='case', read_only=True)

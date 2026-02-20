@@ -2,13 +2,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import CaseEdit from './pages/CaseEdit';
 
-// Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Cases from './pages/Cases';
+import CaseCreate from './pages/CaseCreate';
+import CaseDetail from './pages/CaseDetail';
 import Complaints from './pages/Complaints';
 import DetectiveBoard from './pages/DetectiveBoard';
 import Pursuit from './pages/Pursuit';
@@ -24,6 +26,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
           <Route
             path="/dashboard"
             element={
@@ -34,6 +37,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/cases"
             element={
@@ -44,6 +48,29 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/cases/new"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CaseCreate />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/cases/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CaseDetail />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/complaints"
             element={
@@ -104,6 +131,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+            <Route
+            path="/cases/:id/edit"
+            element={
+              <ProtectedRoute>
+               <Layout>
+        <CaseEdit />
+      </Layout>
+    </ProtectedRoute>
+  }
+/>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

@@ -23,8 +23,12 @@ class CaseViewSet(viewsets.ModelViewSet):
         return CaseSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update']:
-            return [IsDetectiveOrHigher()]
+        if self.action == 'create':
+            return [IsOfficerOrHigher()]
+
+        elif self.action in ['update', 'partial_update']:
+            return [IsOfficerOrHigher()]
+
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
