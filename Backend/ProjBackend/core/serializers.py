@@ -1,52 +1,53 @@
 from rest_framework import serializers
-import uuid
-from accounts.serializers import UserSerializer
-from core.models import Case, CrimeScene
+from django.contrib.auth import get_user_model
+from core.models import Case, CrimeScene, Complaint, CaseStatus, CrimeLevel, ComplaintStatus
+
+User = get_user_model()
+
+class UserSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'role']
+        read_only_fields = fields
+
+class ComplaintSerializer(serializers.ModelSerializer):
+    citizen_detail = UserSimpleSerializer(source='citizen', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = Complaint
+        fields = [
+            'id', 'citizen', 'citizen_detail', 'title', 'description',
+            'status', 'status_display', 'rejection_count',
+            'trainee_feedback', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['citizen', 'status', 'rejection_count', 'trainee_feedback']
 
 class CaseSerializer(serializers.ModelSerializer):
+    assigned_to_detail = UserSimpleSerializer(source='assigned_to', read_only=True)
+    created_by_detail = UserSimpleSerializer(source='created_by', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     crime_level_display = serializers.CharField(source='get_crime_level_display', read_only=True)
-    assigned_to_detail = UserSerializer(source='assigned_to', read_only=True)
-    created_by_detail = UserSerializer(source='created_by', read_only=True)
-    is_closed = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Case
-        fields = [
-            'id', 'case_number', 'title', 'description', 'crime_level',
-            'crime_level_display', 'status', 'status_display', 'assigned_to',
-            'assigned_to_detail', 'created_by', 'created_by_detail',
-            'reported_at', 'created_at', 'updated_at', 'closed_at',
-            'location', 'notes', 'is_closed'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = '__all__'
+        read_only_fields = ['case_number', 'created_at', 'updated_at']
 
 class CaseCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Case
-        fields = [
-            'case_number', 'title', 'description', 'crime_level',
-            'status', 'assigned_to', 'reported_at', 'location', 'notes'
-        ]
-        read_only_fields = ['case_number']
+        fields = ['title', 'description', 'crime_level', 'location', 'reported_at', 'notes']
 
     def create(self, validated_data):
-        if not validated_data.get('case_number'):
-            validated_data['case_number'] = f"CASE-{uuid.uuid4().hex[:8].upper()}"
+        import uuid
+        validated_data['case_number'] = f"CASE-{uuid.uuid4().hex[:8].upper()}"
         return super().create(validated_data)
 
 class CrimeSceneSerializer(serializers.ModelSerializer):
-    case_detail = CaseSerializer(source='case', read_only=True)
-    discovered_by_detail = UserSerializer(source='discovered_by', read_only=True)
-    processed_by_detail = UserSerializer(source='processed_by', read_only=True)
+    discovered_by_detail = UserSimpleSerializer(source='discovered_by', read_only=True)
+    processed_by_detail = UserSimpleSerializer(source='processed_by', read_only=True)
 
     class Meta:
         model = CrimeScene
-        fields = [
-            'id', 'case', 'case_detail', 'location', 'description',
-            'occurred_at', 'discovered_at', 'weather_conditions',
-            'lighting_conditions', 'scene_sketch', 'scene_photos',
-            'discovered_by', 'discovered_by_detail', 'processed_by',
-            'processed_by_detail', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = '__all__'
