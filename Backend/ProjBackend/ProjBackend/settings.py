@@ -51,11 +51,20 @@ INSTALLED_APPS = [
     'rewards',
 ]
 
+import re
+from django.utils.deprecation import MiddlewareMixin
+
+class DisableCSRFForAPIMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        if re.match(r'^/api/', request.path):
+            setattr(request, '_dont_enforce_csrf_checks', True)
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'ProjBackend.settings.DisableCSRFForAPIMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -136,7 +145,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
