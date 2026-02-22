@@ -101,4 +101,38 @@ export enum Role {
     next: string | null;
     previous: string | null;
     results: T[];
+  }
+
+  export interface DocumentFile {
+    name: string;
+    path: string;
+    url: string;
+    uploaded_at: string;
+    uploaded_by: number;
+  }
+
+  export interface Evidence {
+    id: number;
+    evidence_number: string;
+    case: number;
+    case_detail?: Case;
+    evidence_type: string;
+    evidence_type_display: string;
+    description: string;
+    location_found: string | null;
+    collected_at: string;
+    status: string;
+    status_display: string;
+    photos: string[];
+    documents: DocumentFile[];
+    storage_location: string | null;
+    chain_of_custody: any[];
+    collected_by: number | null;
+    collected_by_detail: User | null;
+    analyzed_by: number | null;
+    analyzed_by_detail: User | null;
+    analysis_results: string | null;
+    analysis_date: string | null;
+    created_at: string;
+    updated_at: string;
   }  
