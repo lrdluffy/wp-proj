@@ -22,7 +22,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
     
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action in ['create', 'register', 'login']:
             return [AllowAny()]
         elif self.action in ['update', 'partial_update', 'destroy']:
             return [IsCaptainOrHigher()]

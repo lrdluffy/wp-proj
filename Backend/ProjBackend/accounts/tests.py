@@ -46,7 +46,7 @@ class UserApiTest(TestCase):
             'username': 'newuser',
             'email': 'newuser@example.com',
             'password': 'newpass123',
-            'password2': 'newpass123',
+            'password_confirm': 'newpass123',
             'role': Role.POLICE_OFFICER
         }
         response = self.client.post('/api/auth/users/register/', data)

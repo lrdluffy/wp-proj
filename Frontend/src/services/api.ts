@@ -66,7 +66,7 @@ class ApiService {
     username: string;
     email: string;
     password: string;
-    password2: string;
+    password_confirm: string;
     first_name: string;
     last_name: string;
     role: string;
