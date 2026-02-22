@@ -4,7 +4,8 @@ import type {
   AuthResponse, 
   Case, 
   Complaint, 
-  PaginatedResponse 
+  PaginatedResponse,
+  Evidence
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
@@ -65,7 +66,7 @@ class ApiService {
     username: string;
     email: string;
     password: string;
-    password2: string;
+    password_confirm: string;
     first_name: string;
     last_name: string;
     role: string;
@@ -144,6 +145,46 @@ class ApiService {
 
   async getUser(id: number): Promise<User> {
     const response = await this.api.get<User>(`/auth/users/${id}/`);
+    return response.data;
+  }
+
+  // Evidence Endpoints
+  async getEvidence(params?: {
+    page?: number;
+    case?: number;
+    evidence_type?: string;
+    status?: string;
+    search?: string;
+  }): Promise<PaginatedResponse<Evidence>> {
+    const response = await this.api.get<PaginatedResponse<Evidence>>('/evidence/', { params });
+    return response.data;
+  }
+
+  async getEvidenceByCase(caseId: number): Promise<PaginatedResponse<Evidence>> {
+    return this.getEvidence({ case: caseId });
+  }
+
+  // Document Upload
+  async uploadDocumentToCase(
+    caseId: number,
+    file: File,
+    description?: string
+  ): Promise<{ message: string; evidence_id: number; evidence_number: string; file: { name: string; path: string; url: string } }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (description) {
+      formData.append('description', description);
+    }
+
+    const response = await this.api.post(
+      `/cases/${caseId}/upload-document/`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
     return response.data;
   }
 }

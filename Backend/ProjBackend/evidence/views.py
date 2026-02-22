@@ -1,6 +1,14 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.conf import settings
+import os
+import uuid
+from datetime import datetime
 from evidence.models import Evidence, BiologicalEvidence, MedicalEvidence, VehicleEvidence, IdentificationEvidence
 from evidence.serializers import (
     EvidenceSerializer, BiologicalEvidenceSerializer, MedicalEvidenceSerializer,
@@ -21,6 +29,51 @@ class EvidenceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(collected_by=self.request.user)
+
+    @action(detail=True, methods=['post'], url_path='upload-document')
+    def upload_document(self, request, pk=None):
+        """Upload a document file to evidence"""
+        evidence = self.get_object()
+        
+        if 'file' not in request.FILES:
+            return Response(
+                {'error': 'No file provided'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        file = request.FILES['file']
+        
+        # Generate unique filename
+        file_ext = os.path.splitext(file.name)[1]
+        filename = f"{uuid.uuid4()}{file_ext}"
+        upload_path = os.path.join('evidence/documents', filename)
+        
+        # Save file
+        file_path = default_storage.save(upload_path, ContentFile(file.read()))
+        
+        # Get relative URL for the file
+        file_url = os.path.join(settings.MEDIA_URL, file_path).replace('\\', '/')
+        
+        # Add to evidence documents list
+        documents = evidence.documents or []
+        documents.append({
+            'name': file.name,
+            'path': file_path,
+            'url': file_url,
+            'uploaded_at': datetime.now().isoformat(),
+            'uploaded_by': request.user.id
+        })
+        evidence.documents = documents
+        evidence.save()
+        
+        return Response({
+            'message': 'Document uploaded successfully',
+            'file': {
+                'name': file.name,
+                'path': file_path,
+                'url': file_url
+            }
+        }, status=status.HTTP_201_CREATED)
 
 
 class BiologicalEvidenceViewSet(viewsets.ModelViewSet):

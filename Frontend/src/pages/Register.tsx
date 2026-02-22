@@ -9,7 +9,7 @@ const Register: React.FC = () => {
     username: '',
     email: '',
     password: '',
-    password2: '',
+    password_confirm: '',
     first_name: '',
     last_name: '',
     role: Role.TRAINEE,
@@ -32,7 +32,7 @@ const Register: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.password2) {
+    if (formData.password !== formData.password_confirm) {
       setError('Passwords do not match');
       return;
     }
@@ -44,7 +44,7 @@ const Register: React.FC = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        password2: formData.password2,
+        password_confirm: formData.password_confirm,
         first_name: formData.first_name,
         last_name: formData.last_name,
         role: formData.role,
@@ -161,15 +161,15 @@ const Register: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="password2" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password_confirm" className="block text-sm font-medium text-gray-700">
                   Confirm Password *
                 </label>
                 <input
-                  id="password2"
-                  name="password2"
+                  id="password_confirm"
+                  name="password_confirm"
                   type="password"
                   required
-                  value={formData.password2}
+                  value={formData.password_confirm}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
