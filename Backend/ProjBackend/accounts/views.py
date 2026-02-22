@@ -8,8 +8,7 @@ from accounts.models import User
 from accounts.serializers import (
     UserSerializer, UserRegistrationSerializer, UserDetailsSerializer
 )
-from accounts.permissions import IsPoliceChiefOrHigher, IsCaptainOrHigher
-
+from accounts.permissions import IsPoliceChief, IsCaptainOrHigher
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()

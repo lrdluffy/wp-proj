@@ -17,11 +17,11 @@ class ComplaintSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complaint
         fields = [
-            'id', 'citizen', 'citizen_detail', 'title', 'description',
+            'id', 'citizen_detail', 'title', 'description',
             'status', 'status_display', 'rejection_count',
             'trainee_feedback', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['citizen', 'status', 'rejection_count', 'trainee_feedback']
+        read_only_fields = ['status', 'rejection_count', 'trainee_feedback', 'created_at', 'updated_at']
 
 class CaseSerializer(serializers.ModelSerializer):
     assigned_to_detail = UserSimpleSerializer(source='assigned_to', read_only=True)

@@ -11,9 +11,7 @@ from core.serializers import (
     CrimeSceneSerializer, ComplaintSerializer
 )
 
-
 class CaseViewSet(viewsets.ModelViewSet):
-    queryset = Case.objects.all()
     serializer_class = CaseSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -22,13 +20,19 @@ class CaseViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'reported_at', 'updated_at']
     ordering = ['-created_at']
 
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'role') and user.role == 'CITIZEN':
+            return Case.objects.none()
+        return Case.objects.all()
+
     def get_serializer_class(self):
         if self.action == 'create':
             return CaseCreateSerializer
         return CaseSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsOfficerOrHigher()]
         return [IsAuthenticated()]
 
@@ -37,18 +41,20 @@ class CaseViewSet(viewsets.ModelViewSet):
 
 
 class ComplaintViewSet(viewsets.ModelViewSet):
-    queryset = Complaint.objects.all()
     serializer_class = ComplaintSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'CITIZEN':
+        if hasattr(user, 'role') and user.role == 'CITIZEN':
             return Complaint.objects.filter(citizen=user)
         return Complaint.objects.all()
 
     def perform_create(self, serializer):
-        serializer.save(citizen=self.request.user)
+        serializer.save(citizen=self.request.user, status=ComplaintStatus.PENDING)
+
+    def perform_update(self, serializer):
+        serializer.save(status=ComplaintStatus.PENDING)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def reject_by_trainee(self, request, pk=None):
@@ -57,14 +63,31 @@ class ComplaintViewSet(viewsets.ModelViewSet):
 
         if complaint.rejection_count >= 2:
             complaint.status = ComplaintStatus.VOID
-            complaint.trainee_feedback = f"Final Rejection: {feedback} (Case Voided due to 3 errors)"
+            complaint.trainee_feedback = f"Final Void: {feedback} (More than 3 errors)"
         else:
             complaint.status = ComplaintStatus.RETURNED_TO_CITIZEN
             complaint.rejection_count += 1
             complaint.trainee_feedback = feedback
 
         complaint.save()
-        return Response({'status': 'Returned to citizen or voided'})
+        return Response({'status': 'Returned to citizen'})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsOfficerOrHigher])
+    def send_back_to_trainee(self, request, pk=None):
+        complaint = self.get_object()
+        feedback = request.data.get('feedback', 'Defect reported by officer')
+        complaint.status = ComplaintStatus.PENDING
+        complaint.trainee_feedback = f"Returned from officer: {feedback}"
+        complaint.save()
+        return Response({'status': 'Sent back to trainee'})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsOfficerOrHigher])
+    def send_back_to_trainee_alt(self, request, pk=None):
+        complaint = self.get_object()
+        complaint.status = ComplaintStatus.PENDING
+        complaint.trainee_feedback = f"Defect reported by officer: {request.data.get('feedback')}"
+        complaint.save()
+        return Response({'status': 'Sent back to trainee'})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def send_to_officer(self, request, pk=None):
@@ -78,7 +101,6 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         complaint = self.get_object()
         import uuid
 
-        # ساخت اتوماتیک پرونده از روی شکایت تایید شده
         new_case = Case.objects.create(
             case_number=f"CASE-{uuid.uuid4().hex[:8].upper()}",
             title=complaint.title,
@@ -87,12 +109,9 @@ class ComplaintViewSet(viewsets.ModelViewSet):
             created_by=request.user,
             status='PENDING'
         )
-
         complaint.status = ComplaintStatus.APPROVED
         complaint.save()
-
         return Response({'status': 'Approved', 'case_id': new_case.id})
-
 
 class CrimeSceneViewSet(viewsets.ModelViewSet):
     queryset = CrimeScene.objects.all()
