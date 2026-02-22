@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/api';
 import { TableSkeleton } from '../components/Skeleton';
-import { FileText, Upload, Search, X, AlertCircle } from 'lucide-react';
-import type { Case, Evidence } from '../types';
+import { FileText, Upload, Search, X, AlertCircle, Download, Eye, Calendar } from 'lucide-react';
+import type { Case, Evidence, DocumentFile } from '../types';
 import { formatDate } from '../utils/format';
 
 interface CaseWithDocuments extends Case {
@@ -21,6 +21,8 @@ const Documents: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [viewerModalOpen, setViewerModalOpen] = useState(false);
+  const [viewingCase, setViewingCase] = useState<CaseWithDocuments | null>(null);
 
   useEffect(() => {
     fetchCases();
@@ -119,6 +121,94 @@ const Documents: React.FC = () => {
     c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.case_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleViewDocuments = (caseItem: CaseWithDocuments) => {
+    setViewingCase(caseItem);
+    setViewerModalOpen(true);
+  };
+
+  const getDocumentUrl = (document: DocumentFile): string => {
+    // Document URL is relative, need to construct full URL
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    const baseUrl = apiBaseUrl.replace('/api', '');
+    return `${baseUrl}${document.url}`;
+  };
+
+  const handleDownloadDocument = (document: DocumentFile) => {
+    const url = getDocumentUrl(document);
+    const link = window.document.createElement('a');
+    link.href = url;
+    link.download = document.name;
+    // Add auth token to request if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(url, {
+        headers: {
+          'Authorization': `Token ${token}`,
+        },
+      })
+        .then((response) => response.blob())
+        .then((blob) => {
+          const blobUrl = window.URL.createObjectURL(blob);
+          link.href = blobUrl;
+          link.click();
+          window.URL.revokeObjectURL(blobUrl);
+        })
+        .catch((error) => {
+          console.error('Error downloading document:', error);
+          // Fallback to direct link
+          link.click();
+        });
+    } else {
+      link.click();
+    }
+  };
+
+  const handleViewDocument = (document: DocumentFile) => {
+    const url = getDocumentUrl(document);
+    const token = localStorage.getItem('token');
+    
+    // For PDFs and images, open in new tab
+    const fileExtension = document.name.split('.').pop()?.toLowerCase();
+    const viewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif'];
+    
+    if (viewableTypes.includes(fileExtension || '')) {
+      // Open in new tab with auth
+      if (token) {
+        fetch(url, {
+          headers: {
+            'Authorization': `Token ${token}`,
+          },
+        })
+          .then((response) => response.blob())
+          .then((blob) => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+          })
+          .catch((error) => {
+            console.error('Error viewing document:', error);
+            // Fallback to direct link
+            window.open(url, '_blank');
+          });
+      } else {
+        window.open(url, '_blank');
+      }
+    } else {
+      // For other file types, trigger download
+      handleDownloadDocument(document);
+    }
+  };
+
+  // Get all documents from all evidence items for a case
+  const getAllDocuments = (caseItem: CaseWithDocuments): Array<{ evidence: Evidence; document: DocumentFile }> => {
+    const allDocs: Array<{ evidence: Evidence; document: DocumentFile }> = [];
+    caseItem.documents.forEach((evidence) => {
+      evidence.documents?.forEach((doc) => {
+        allDocs.push({ evidence, document: doc });
+      });
+    });
+    return allDocs;
+  };
 
   return (
     <div className="space-y-6">
@@ -222,11 +312,9 @@ const Documents: React.FC = () => {
                         </button>
                         {caseItem.documentCount > 0 && (
                           <button
-                            onClick={() => {
-                              // TODO: Implement document viewer modal
-                              alert(`Viewing ${caseItem.documentCount} document(s) for ${caseItem.case_number}`);
-                            }}
+                            onClick={() => handleViewDocuments(caseItem)}
                             className="text-gray-600 hover:text-gray-900"
+                            title="View documents"
                           >
                             Review
                           </button>
@@ -306,7 +394,10 @@ const Documents: React.FC = () => {
                         Document File
                       </label>
                       <div className="flex items-center space-x-2">
-                        <label className="flex cursor-pointer items-center space-x-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <label 
+                          className="flex cursor-pointer items-center space-x-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          htmlFor="file-upload"  
+                        >
                           <Upload className="h-4 w-4" />
                           <span>{selectedFile ? selectedFile.name : 'Choose File'}</span>
                         </label>
@@ -314,6 +405,7 @@ const Documents: React.FC = () => {
                           type="file"
                           onChange={handleFileSelect}
                           className="hidden"
+                          id="file-upload"
                           accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
                         />
                         {selectedFile && (
@@ -375,6 +467,114 @@ const Documents: React.FC = () => {
                 )}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {viewerModalOpen && viewingCase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-4xl max-h-[90vh] rounded-lg bg-white shadow-xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Document Viewer</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {viewingCase.case_number} - {viewingCase.title}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setViewerModalOpen(false);
+                  setViewingCase(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {getAllDocuments(viewingCase).length === 0 ? (
+                <div className="py-12 text-center">
+                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-4 text-gray-500">No documents found for this case</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {getAllDocuments(viewingCase).map(({ evidence, document }, index) => (
+                    <div
+                      key={`${evidence.id}-${index}`}
+                      className="rounded-lg border border-gray-200 bg-white p-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                            <h4 className="font-medium text-gray-900">{document.name}</h4>
+                          </div>
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <p className="text-xs text-gray-500">
+                              Evidence: {evidence.evidence_number}
+                            </p>
+                            {evidence.description && (
+                              <p className="text-xs text-gray-500">
+                                Description: {evidence.description}
+                              </p>
+                            )}
+                            <div className="flex items-center space-x-4 mt-2">
+                              <div className="flex items-center space-x-1">
+                                <Calendar className="h-3 w-3" />
+                                <span className="text-xs">
+                                  Uploaded: {formatDate(document.uploaded_at)}
+                                </span>
+                              </div>
+                              <span className="text-xs">
+                                Status: {evidence.status_display}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <button
+                            onClick={() => handleViewDocument(document)}
+                            className="flex items-center space-x-1 rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                            title="View document"
+                          >
+                            <Eye className="h-4 w-4" />
+                            <span>View</span>
+                          </button>
+                          <button
+                            onClick={() => handleDownloadDocument(document)}
+                            className="flex items-center space-x-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            title="Download document"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span>Download</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-gray-200 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  Total: {getAllDocuments(viewingCase).length} document{getAllDocuments(viewingCase).length !== 1 ? 's' : ''}
+                </p>
+                <button
+                  onClick={() => {
+                    setViewerModalOpen(false);
+                    setViewingCase(null);
+                  }}
+                  className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
