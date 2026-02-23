@@ -39,7 +39,6 @@ const CaseDetail: React.FC = () => {
           <ArrowLeft className="h-5 w-5 mr-1" /> بازگشت به لیست
         </button>
 
-        {/* دکمه ویرایش فقط برای غیر کارآموزان */}
         {user?.role !== 'TRAINEE' && (
           <Link
             to={`/cases/${caseData.id}/edit`}
@@ -85,11 +84,15 @@ const CaseDetail: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center text-gray-700">
-                <User className="h-5 w-5 mr-3 text-gray-400" />
+             <div className="flex items-center text-gray-700">
+              <User className="h-5 w-5 mr-3 text-gray-400" />
                 <span className="font-medium mr-2">مسئول پرونده:</span>
-                <span className={caseData.assigned_to_detail?.full_name ? 'text-gray-900 font-bold' : 'text-gray-400 italic'}>
-                  {caseData.assigned_to_detail?.full_name || 'تخصیص داده نشده'}
+                <span className={caseData.assigned_to_detail ? 'text-gray-900 font-bold' : 'text-gray-400 italic'}>
+                  {caseData.assigned_to_detail
+                    ? (caseData.assigned_to_detail.full_name ||
+                       `${caseData.assigned_to_detail.first_name} ${caseData.assigned_to_detail.last_name}` ||
+                       caseData.assigned_to_detail.username)
+                    : 'تخصیص داده نشده'}
                 </span>
               </div>
               <div className="flex items-center text-gray-700">

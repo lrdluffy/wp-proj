@@ -23,6 +23,17 @@ export enum CrimeLevel {
   LEVEL_2 = 2,
   LEVEL_3 = 3,
 }
+export interface Evidence {
+  id: number;
+  evidence_number: string;
+  case: number;
+  description: string;
+  file: string;
+  evidence_type: 'BIOLOGICAL' | 'DOCUMENT' | 'IMAGE' | 'AUDIO';
+  is_verified: boolean;
+  uploaded_by_detail: User;
+  uploaded_at: string;
+}
 
 export enum ComplaintStatus {
   PENDING = 'PENDING',

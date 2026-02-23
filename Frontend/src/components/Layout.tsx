@@ -23,7 +23,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   const isActive = (path: string) => location.pathname === path;
-  const isCitizen = user?.role === Role.CITIZEN;
+
+  const role = user?.role as Role;
+  const isCitizen = role === Role.CITIZEN;
+  const isStaff = !isCitizen && role !== Role.TRAINEE; // رده‌های عملیاتی پلیس
+  const hasDetectiveAccess = [Role.DETECTIVE, Role.SERGEANT, Role.CAPTAIN, Role.POLICE_CHIEF].includes(role);
+  const hasAdminAccess = [Role.POLICE_CHIEF, Role.CAPTAIN].includes(role);
 
   return (
     <div className="min-h-screen bg-gray-50 flex" dir="ltr">
@@ -77,49 +82,55 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <span>Manage Complaints</span>
                 </Link>
 
-                <Link
-                  to="/cases"
-                  className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
-                    isActive('/cases') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-                  }`}
-                >
-                  <FileText className="h-5 w-5" />
-                  <span>Cases</span>
-                </Link>
+                {isStaff && (
+                  <>
+                    <Link
+                      to="/cases"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/cases') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <FileText className="h-5 w-5" />
+                      <span>Cases</span>
+                    </Link>
 
-                <Link
-                  to="/detective-board"
-                  className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
-                    isActive('/detective-board') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-                  }`}
-                >
-                  <Shield className="h-5 w-5 text-purple-400" />
-                  <span>Detective Board</span>
-                </Link>
+                    {hasDetectiveAccess && (
+                      <Link
+                        to="/detective-board"
+                        className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                          isActive('/detective-board') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                        }`}
+                      >
+                        <Shield className="h-5 w-5 text-purple-400" />
+                        <span>Detective Board</span>
+                      </Link>
+                    )}
 
-                <Link
-                  to="/pursuit"
-                  className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
-                    isActive('/pursuit') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-                  }`}
-                >
-                  <Shield className="h-5 w-5 text-red-400" />
-                  <span>Under Pursuit</span>
-                </Link>
+                    <Link
+                      to="/pursuit"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/pursuit') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <Shield className="h-5 w-5 text-red-400" />
+                      <span>Under Pursuit</span>
+                    </Link>
 
-                <Link
-                  to="/reports"
-                  className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
-                    isActive('/reports') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-                  }`}
-                >
-                  <BarChart3 className="h-5 w-5 text-cyan-400" />
-                  <span>Reports</span>
-                </Link>
+                    <Link
+                      to="/reports"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/reports') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <BarChart3 className="h-5 w-5 text-cyan-400" />
+                      <span>Reports</span>
+                    </Link>
+                  </>
+                )}
               </>
             )}
 
-            {(user?.role === Role.POLICE_CHIEF || user?.role === Role.CAPTAIN) && (
+            {hasAdminAccess && (
               <Link
                 to="/admin"
                 className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
@@ -162,7 +173,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               {isActive('/cases') && 'Cases'}
               {isActive('/detective-board') && 'Detective Board'}
               {isActive('/pursuit') && 'Under Pursuit'}
-              {isActive('/complaints') && 'Manage Complaints'}
+              {isActive('/complaints') && 'Complaints Management'}
               {isActive('/complaints/new') && 'Submit New Complaint'}
               {location.pathname.includes('/complaints/edit') && 'Edit Complaint'}
               {isActive('/reports') && 'Reports'}

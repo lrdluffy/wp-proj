@@ -55,11 +55,11 @@ function App() {
             <Route path="/complaints/new" element={<ComplaintForm />} />
             <Route path="/complaints/edit/:id" element={<ComplaintForm />} />
 
-            {/* مسیرهای مخصوص کادر پلیس (Officer, Detective, Sergeant, Captain, Chief) */}
             <Route
               element={
                 <RoleBasedRoute allowedRoles={[
                   Role.POLICE_OFFICER,
+                  Role.PATROL_OFFICER,
                   Role.DETECTIVE,
                   Role.SERGEANT,
                   Role.CAPTAIN,
@@ -78,7 +78,12 @@ function App() {
 
             <Route
               element={
-                <RoleBasedRoute allowedRoles={[Role.DETECTIVE, Role.CAPTAIN, Role.POLICE_CHIEF]} />
+                <RoleBasedRoute allowedRoles={[
+                  Role.DETECTIVE,
+                  Role.SERGEANT,
+                  Role.CAPTAIN,
+                  Role.POLICE_CHIEF
+                ]} />
               }
             >
               <Route path="/detective-board" element={<DetectiveBoard />} />

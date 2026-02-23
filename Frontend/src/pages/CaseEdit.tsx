@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { AlertCircle, Save, ArrowRight } from 'lucide-react';
+import { Role } from '../types';
 import type { User, CaseStatus } from '../types';
 
 const CaseEdit: React.FC = () => {
@@ -52,13 +53,16 @@ const CaseEdit: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const payload = { ...formData };
-      if (payload.assigned_to === '') (payload as any).assigned_to = null;
+      const payload = {
+        ...formData,
+        assigned_to: formData.assigned_to === '' ? null : Number(formData.assigned_to)
+      };
 
       await apiService.updateCase(parseInt(id!), payload as any);
       navigate(`/cases/${id}`);
     } catch (err: any) {
       setError('خطا در بروزرسانی پرونده. دسترسی خود را بررسی کنید.');
+      console.error('Update failed:', err);
     } finally {
       setLoading(false);
     }
@@ -116,9 +120,21 @@ const CaseEdit: React.FC = () => {
               onChange={(e) => setFormData({...formData, assigned_to: e.target.value})}
             >
               <option value="">تخصیص داده نشده</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.full_name} ({u.role})</option>
-              ))}
+              {users
+                .filter(u => [
+                  Role.POLICE_OFFICER,
+                  Role.PATROL_OFFICER,
+                  Role.DETECTIVE,
+                  Role.SERGEANT,
+                  Role.CAPTAIN,
+                  Role.POLICE_CHIEF
+                ].includes(u.role))
+                .map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.full_name || `${u.first_name} ${u.last_name}` || u.username} ({u.role})
+                  </option>
+                ))
+              }
             </select>
           </div>
 
