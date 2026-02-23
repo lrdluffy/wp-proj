@@ -21,30 +21,24 @@ class ApiService {
       },
     });
 
-    // Add request interceptor to include auth token
+
     this.api.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Token ${token}`;
-        }
+        if (token) config.headers.Authorization = `Token ${token}`;
         return config;
       },
       (error) => Promise.reject(error)
     );
 
-    // Add response interceptor for error handling
+
     this.api.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          // Only redirect if not already on login/register/home page
-          const currentPath = window.location.pathname;
-          if (currentPath !== '/' && 
-              !currentPath.includes('/login') && 
-              !currentPath.includes('/register')) {
+          if (!['/', '/login', '/register'].includes(window.location.pathname)) {
             window.location.href = '/login';
           }
         }
@@ -55,24 +49,11 @@ class ApiService {
 
   // Auth Endpoints
   async login(username: string, password: string): Promise<AuthResponse> {
-    const response = await this.api.post<AuthResponse>('/auth/users/login/', {
-      username,
-      password,
-    });
+    const response = await this.api.post<AuthResponse>('/auth/users/login/', { username, password });
     return response.data;
   }
 
-  async register(data: {
-    username: string;
-    email: string;
-    password: string;
-    password_confirm: string;
-    first_name: string;
-    last_name: string;
-    role: string;
-    badge_number?: string;
-    phone_number?: string;
-  }): Promise<AuthResponse> {
+  async register(data: any): Promise<AuthResponse> {
     const response = await this.api.post<AuthResponse>('/auth/users/register/', data);
     return response.data;
   }
@@ -82,13 +63,7 @@ class ApiService {
     return response.data;
   }
 
-  // Case Endpoints
-  async getCases(params?: {
-    page?: number;
-    status?: string;
-    crime_level?: number;
-    search?: string;
-  }): Promise<PaginatedResponse<Case>> {
+  async getCases(params?: any): Promise<PaginatedResponse<Case>> {
     const response = await this.api.get<PaginatedResponse<Case>>('/cases/', { params });
     return response.data;
   }
@@ -108,12 +83,7 @@ class ApiService {
     return response.data;
   }
 
-  // Complaint Endpoints
-  async getComplaints(params?: {
-    page?: number;
-    status?: string;
-    search?: string;
-  }): Promise<PaginatedResponse<Complaint>> {
+  async getComplaints(params?: any): Promise<PaginatedResponse<Complaint>> {
     const response = await this.api.get<PaginatedResponse<Complaint>>('/complaints/', { params });
     return response.data;
   }
@@ -133,20 +103,28 @@ class ApiService {
     return response.data;
   }
 
-  // User Endpoints
-  async getUsers(params?: {
-    page?: number;
-    role?: string;
-    search?: string;
-  }): Promise<PaginatedResponse<User>> {
+  async rejectComplaint(id: number, feedback: string) {
+    return this.api.post(`/complaints/${id}/reject_by_trainee/`, { feedback });
+  }
+
+  async sendBackToTrainee(id: number, feedback: string) {
+    return this.api.post(`/complaints/${id}/send_back_to_trainee/`, { feedback });
+  }
+
+  async sendToOfficer(id: number) {
+    return this.api.post(`/complaints/${id}/send_to_officer/`);
+  }
+
+  async approveComplaint(id: number) {
+    return this.api.post(`/complaints/${id}/approve_and_create_case/`);
+  }
+
+  async getUsers(params?: any): Promise<PaginatedResponse<User>> {
     const response = await this.api.get<PaginatedResponse<User>>('/auth/users/', { params });
     return response.data;
   }
 
-  async getUser(id: number): Promise<User> {
-    const response = await this.api.get<User>(`/auth/users/${id}/`);
-    return response.data;
-  }
+
 
   async updateUser(id: number, data: Partial<User>): Promise<User> {
     const response = await this.api.patch<User>(`/auth/users/${id}/`, data);
