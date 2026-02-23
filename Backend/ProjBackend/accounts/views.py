@@ -1,4 +1,5 @@
-from rest_framework import generics, status, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -15,6 +16,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['role', 'is_active']
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'badge_number', 'phone_number']
 
     def get_serializer_class(self):
         if self.action == 'retrieve' or self.action == 'update':
