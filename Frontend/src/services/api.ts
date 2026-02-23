@@ -148,6 +148,11 @@ class ApiService {
     return response.data;
   }
 
+  async updateUser(id: number, data: Partial<User>): Promise<User> {
+    const response = await this.api.patch<User>(`/auth/users/${id}/`, data);
+    return response.data;
+  }
+
   // Evidence Endpoints
   async getEvidence(params?: {
     page?: number;
