@@ -3,7 +3,7 @@ export enum Role {
   TRAINEE = 'TRAINEE',
   MEDICAL_EXAMINER = 'MEDICAL_EXAMINER',
   POLICE_OFFICER = 'POLICE_OFFICER',
-  PATROL_OFFICER = 'PATROL_OFF_ICER',
+  PATROL_OFFICER = 'PATROL_OFFICER',
   DETECTIVE = 'DETECTIVE',
   SERGEANT = 'SERGEANT',
   CAPTAIN = 'CAPTAIN',
@@ -23,6 +23,7 @@ export enum CrimeLevel {
   LEVEL_2 = 2,
   LEVEL_3 = 3,
 }
+
 export interface Evidence {
   id: number;
   evidence_number: string;
@@ -60,6 +61,23 @@ export interface User {
   last_login?: string;
 }
 
+export interface Witness {
+  name: string;
+  phone: string;
+  national_id: string;
+}
+
+export interface CrimeScene {
+  id: number;
+  location: string;
+  description: string;
+  occurred_at: string;
+  discovered_at: string;
+  witnesses_info: Witness[];
+  weather_conditions?: string;
+  lighting_conditions?: string;
+}
+
 export interface Case {
   id: number;
   case_number: string;
@@ -69,6 +87,7 @@ export interface Case {
   crime_level_display: string;
   status: CaseStatus;
   status_display: string;
+  plaintiffs_info: any[];
   assigned_to: number | null;
   assigned_to_detail: User | null;
   created_by: number | null;
@@ -80,6 +99,8 @@ export interface Case {
   location: string | null;
   notes: string | null;
   is_closed: boolean;
+  is_approved: boolean;
+  crime_scene?: CrimeScene;
 }
 
 export interface Complaint {

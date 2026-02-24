@@ -170,6 +170,9 @@ class ApiService {
     );
     return response.data;
   }
+  async approveCase(id: number) {
+  return this.api.post(`/cases/${id}/approve/`);
+}
 }
 
 export const apiService = new ApiService();

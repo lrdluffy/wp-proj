@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { AlertCircle, Save, ArrowRight } from 'lucide-react';
+import { AlertCircle, Save, ArrowRight, Users, Plus, Trash2 } from 'lucide-react';
 import { Role } from '../types';
-import type { User, CaseStatus } from '../types';
+import type { User, CaseStatus, Case } from '../types';
 
 const CaseEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,14 +19,17 @@ const CaseEdit: React.FC = () => {
     status: '' as CaseStatus,
     assigned_to: '' as string | number,
     location: '',
-    notes: ''
+    notes: '',
+    plaintiffs_info: [] as any[]
   });
+
+  const [newPlaintiff, setNewPlaintiff] = useState({ name: '', phone: '', national_id: '' });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [caseData, usersData] = await Promise.all([
-          apiService.getCase(parseInt(id!)),
+          apiService.getCase(parseInt(id!)) as Promise<Case>,
           apiService.getUsers()
         ]);
 
@@ -37,7 +40,8 @@ const CaseEdit: React.FC = () => {
           status: caseData.status,
           assigned_to: caseData.assigned_to || '',
           location: caseData.location || '',
-          notes: caseData.notes || ''
+          notes: caseData.notes || '',
+          plaintiffs_info: caseData.plaintiffs_info || []
         });
         setUsers(usersData.results);
       } catch (err) {
@@ -48,6 +52,26 @@ const CaseEdit: React.FC = () => {
     };
     fetchData();
   }, [id]);
+
+  const addPlaintiff = () => {
+    const phoneRegex = /^09\d{9}$/;
+    const nationalIdRegex = /^\d{10}$/;
+
+    if (!newPlaintiff.name.trim()) return alert("نام شاکی الزامی است.");
+    if (!nationalIdRegex.test(newPlaintiff.national_id)) return alert("کد ملی باید ۱۰ رقم باشد.");
+    if (!phoneRegex.test(newPlaintiff.phone)) return alert("شماره تماس معتبر نیست.");
+
+    setFormData({
+      ...formData,
+      plaintiffs_info: [...formData.plaintiffs_info, newPlaintiff]
+    });
+    setNewPlaintiff({ name: '', phone: '', national_id: '' });
+  };
+
+  const removePlaintiff = (index: number) => {
+    const updated = formData.plaintiffs_info.filter((_, i) => i !== index);
+    setFormData({ ...formData, plaintiffs_info: updated });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +147,7 @@ const CaseEdit: React.FC = () => {
               {users
                 .filter(u => [
                   Role.POLICE_OFFICER,
-                  Role.PATROL_OFFICER,
+                  Role.POLICE_OFFICER, // اصلاح شده طبق خطای TS2551
                   Role.DETECTIVE,
                   Role.SERGEANT,
                   Role.CAPTAIN,
@@ -170,6 +194,41 @@ const CaseEdit: React.FC = () => {
             value={formData.description}
             onChange={(e) => setFormData({...formData, description: e.target.value})}
           />
+        </div>
+
+        <div className="border-t pt-6 bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <Users className="h-4 w-4 mr-2" /> مدیریت شاکیان (Plaintiffs)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+            <input
+              type="text" placeholder="نام شاکی" className="text-sm border rounded p-2"
+              value={newPlaintiff.name} onChange={(e) => setNewPlaintiff({...newPlaintiff, name: e.target.value})}
+            />
+            <input
+              type="text" placeholder="کد ملی" className="text-sm border rounded p-2"
+              value={newPlaintiff.national_id} onChange={(e) => setNewPlaintiff({...newPlaintiff, national_id: e.target.value})}
+            />
+            <div className="flex space-x-2">
+              <input
+                type="text" placeholder="شماره تماس" className="text-sm border rounded p-2 flex-1"
+                value={newPlaintiff.phone} onChange={(e) => setNewPlaintiff({...newPlaintiff, phone: e.target.value})}
+              />
+              <button type="button" onClick={addPlaintiff} className="bg-green-600 text-white p-2 rounded hover:bg-green-700">
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {formData.plaintiffs_info.map((p, index) => (
+              <div key={index} className="flex items-center justify-between bg-white p-2 rounded border text-xs">
+                <span>{p.name} | {p.national_id} | {p.phone}</span>
+                <button type="button" onClick={() => removePlaintiff(index)} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>
