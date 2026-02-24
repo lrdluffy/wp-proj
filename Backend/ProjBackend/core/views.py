@@ -11,19 +11,25 @@ from core.serializers import (
     CrimeSceneSerializer, ComplaintSerializer
 )
 
+
 class CaseViewSet(viewsets.ModelViewSet):
     serializer_class = CaseSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'crime_level', 'assigned_to']
+    filterset_fields = ['status', 'crime_level', 'assigned_to', 'is_approved']  # فیلتر تایید اضافه شد
     search_fields = ['case_number', 'title', 'description']
     ordering_fields = ['created_at', 'reported_at', 'updated_at']
     ordering = ['-created_at']
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'role') and user.role == 'CITIZEN':
+        if not hasattr(user, 'role') or user.role == 'CITIZEN':
             return Case.objects.none()
+
+        # کارآموز فقط پرونده‌های تایید شده را ببیند
+        if user.role == 'TRAINEE':
+            return Case.objects.filter(is_approved=True)
+
         return Case.objects.all()
 
     def get_serializer_class(self):
@@ -37,7 +43,19 @@ class CaseViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
+        # منطق تایید خودکار در سریالایزر هندل شده است
         serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsOfficerOrHigher])
+    def approve(self, request, pk=None):
+        """متد تایید پرونده توسط مافوق"""
+        case = self.get_object()
+        # فقط رده‌های بالاتر از افسر (مثلا سروان یا رئیس پلیس) یا خود سازنده اگر رئیس باشد
+        if request.user.role in ['CAPTAIN', 'POLICE_CHIEF', 'SERGEANT']:
+            case.is_approved = True
+            case.save()
+            return Response({'status': 'Case approved successfully'})
+        return Response({'detail': 'You do not have permission to approve cases.'}, status=status.HTTP_403_FORBIDDEN)
 
 
 class ComplaintViewSet(viewsets.ModelViewSet):
@@ -107,11 +125,13 @@ class ComplaintViewSet(viewsets.ModelViewSet):
             description=complaint.description,
             reported_at=complaint.created_at,
             created_by=request.user,
-            status='PENDING'
+            status='PENDING',
+            is_approved=(request.user.role == 'POLICE_CHIEF')  # تایید خودکار فقط برای رئیس
         )
         complaint.status = ComplaintStatus.APPROVED
         complaint.save()
         return Response({'status': 'Approved', 'case_id': new_case.id})
+
 
 class CrimeSceneViewSet(viewsets.ModelViewSet):
     queryset = CrimeScene.objects.all()

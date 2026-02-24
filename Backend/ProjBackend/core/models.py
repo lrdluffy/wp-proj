@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 
 class CrimeLevel(models.IntegerChoices):
@@ -69,6 +70,17 @@ class Case(models.Model):
         related_name='created_cases'
     )
 
+    is_approved = models.BooleanField(
+        default=False,
+        help_text="Requires approval from a higher rank unless created by Chief."
+    )
+
+    plaintiffs_info = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of plaintiffs: [{'name': '', 'phone': '', 'national_id': ''}]"
+    )
+
     reported_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -84,7 +96,13 @@ class Case(models.Model):
 
 
 class CrimeScene(models.Model):
-    case = models.OneToOneField(Case, on_delete=models.CASCADE, related_name='crime_scene', null=True, blank=True)
+    case = models.OneToOneField(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='crime_scene',
+        null=True,
+        blank=True
+    )
     location = models.CharField(max_length=511)
     description = models.TextField()
     occurred_at = models.DateTimeField()
@@ -100,13 +118,25 @@ class CrimeScene(models.Model):
     scene_sketch = models.ImageField(upload_to='crime_scenes/sketches/', null=True, blank=True)
     scene_photos = models.JSONField(default=list)
 
-    discovered_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
-                                      related_name='discovered_scenes')
-    processed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                                     related_name='processed_scenes')
+    discovered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='discovered_scenes'
+    )
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='processed_scenes'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Scene for Case: {self.case.case_number if self.case else 'Unassigned'}"

@@ -1,12 +1,10 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-
 from accounts.models import User
-
 
 class UserSerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source='get_role_display', read_only=True)
-    full_name = serializers.CharField(source='get_full_name')
+    full_name = serializers.CharField(source='get_full_name', read_only=True)
 
     class Meta:
         model = User
@@ -42,4 +40,5 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class UserDetailsSerializer(UserSerializer):
     class Meta:
+        model = User  # اضافه شدن مدل برای رفع AssertionError
         fields = UserSerializer.Meta.fields + ['last_login']
