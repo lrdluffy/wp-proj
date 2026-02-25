@@ -16,7 +16,6 @@ class EvidenceSerializer(serializers.ModelSerializer):
     collected_by_detail = UserSerializer(source='collected_by', read_only=True)
     analyzed_by_detail = UserSerializer(source='analyzed_by', read_only=True)
 
-    # تغییر این خط: از مدل مستقیماً آدرس رو می‌گیریم
     photos = serializers.SerializerMethodField()
 
     uploaded_files = serializers.ListField(
@@ -35,7 +34,6 @@ class EvidenceSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id']
 
-    # این متد رو اضافه کن تا آدرس درست عکس رو بسازه
     def get_photos(self, obj):
         request = self.context.get('request')
         if obj.photos and hasattr(obj.photos, 'url'):
@@ -45,7 +43,6 @@ class EvidenceSerializer(serializers.ModelSerializer):
         return None
 
     def create(self, validated_data):
-        # ... همان کدهای قبلی متد create ...
         uploaded_files = validated_data.pop('uploaded_files', [])
         request = self.context.get('request')
         evidence_type = validated_data.get('evidence_type')
@@ -81,7 +78,6 @@ class EvidenceSerializer(serializers.ModelSerializer):
 
         if uploaded_files:
             try:
-                # استفاده از متد save روی فیلد برای اطمینان از ذخیره فیزیکی
                 file_obj = uploaded_files[0]
                 instance.photos.save(file_obj.name, file_obj, save=True)
             except Exception as e:
@@ -92,7 +88,6 @@ class EvidenceSerializer(serializers.ModelSerializer):
 class EvidenceDetailSerializer(serializers.ModelSerializer):
     collected_by_name = serializers.CharField(source='collected_by.get_full_name', read_only=True)
     case_title = serializers.CharField(source='case.title', read_only=True)
-    # فیلد جادویی برای استخراج دیتای اختصاصی
     specific_data = serializers.SerializerMethodField()
 
     class Meta:
@@ -100,7 +95,6 @@ class EvidenceDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_specific_data(self, obj):
-        # بررسی می‌کنیم مدرک فرزند کدومه
         if hasattr(obj, 'vehicleevidence'):
             v = obj.vehicleevidence
             return {
@@ -116,7 +110,7 @@ class EvidenceDetailSerializer(serializers.ModelSerializer):
                 'subtype': 'IDENTIFICATION',
                 'doc_type': i.document_type,
                 'doc_number': i.document_number,
-                'extra': i.extra_details # همان دیکشنری کلید-مقدار
+                'extra': i.extra_details
             }
         if hasattr(obj, 'biologicalevidence'):
             b = obj.biologicalevidence
@@ -124,7 +118,7 @@ class EvidenceDetailSerializer(serializers.ModelSerializer):
                 'subtype': 'BIOLOGICAL',
                 'sample': b.sample_type,
                 'lab_ref': b.lab_reference_number,
-                'result': getattr(obj, 'analysis_results', None) # هندل کردن خطای احتمالی فیلد نال
+                'result': getattr(obj, 'analysis_results', None)
             }
         return None
 

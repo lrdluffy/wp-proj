@@ -76,7 +76,6 @@ const EvidenceCreate: React.FC = () => {
 
     const data = new FormData();
 
-    // ۱. فیلدهای اصلی
     data.append('evidence_number', formData.evidence_number);
     data.append('case', formData.case);
     data.append('evidence_type', formData.evidence_type);
@@ -87,7 +86,6 @@ const EvidenceCreate: React.FC = () => {
         data.append('location_found', formData.location_found);
     }
 
-    // ۲. فیلدهای شرطی (Vehicle)
     if (formData.evidence_type === EvidenceType.VEHICLE) {
         if (formData.vehicle_license_plate) data.append('vehicle_license_plate', formData.vehicle_license_plate);
         if (formData.vin_number) data.append('vin_number', formData.vin_number);
@@ -95,7 +93,6 @@ const EvidenceCreate: React.FC = () => {
         if (formData.vehicle_color) data.append('vehicle_color', formData.vehicle_color);
     }
 
-    // ۳. فیلدهای شرطی (Identification)
     if (formData.evidence_type === EvidenceType.IDENTIFICATION) {
       if (formData.document_type) data.append('document_type', formData.document_type);
       if (formData.document_number) data.append('document_number', formData.document_number);
@@ -106,7 +103,6 @@ const EvidenceCreate: React.FC = () => {
       data.append('extra_details', JSON.stringify(extra_details));
     }
 
-    // ۴. ارسال فایل‌ها با کلید صحیح (uploaded_files)
     if (selectedFiles.length > 0) {
         selectedFiles.forEach((file) => {
             data.append('uploaded_files', file);

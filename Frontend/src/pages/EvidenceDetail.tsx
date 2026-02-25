@@ -39,7 +39,6 @@ const EvidenceDetail = () => {
       </div>
 
       <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* ستون راست: اطلاعات عمومی */}
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h3 className="text-lg font-bold mb-4 border-b pb-2 flex items-center text-gray-700">
@@ -50,7 +49,6 @@ const EvidenceDetail = () => {
             </p>
           </div>
 
-          {/* نمایش بخش اختصاصی طبق نوع مدرک (بند ۴.۳.۱ تا ۴.۳.۵) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <h3 className="text-lg font-bold mb-4 border-b pb-2 text-gray-700">جزئیات فنی مدرک</h3>
 
@@ -73,7 +71,6 @@ const EvidenceDetail = () => {
                   <span className="font-bold text-green-800">نوع و شماره مدرک:</span>
                   <span>{data.doc_type} - {data.doc_number}</span>
                 </div>
-                {/* بخش کلید-مقدار بند ۴.۳.۴ */}
                 <div className="mt-4">
                   <span className="text-sm font-bold text-gray-500">سایر اطلاعات (کلید-مقدار):</span>
                   <table className="w-full mt-2 border-collapse">
@@ -99,7 +96,6 @@ const EvidenceDetail = () => {
                     <span className="font-mono">{data.sample}</span>
                   </div>
                 </div>
-                {/* بخش نتیجه پزشک قانونی - بند ۴.۳.۲ */}
                 <div className="p-4 border-2 border-dashed rounded-lg">
                   <span className="text-sm font-bold text-gray-500">نتیجه بررسی (پزشکی قانونی/بانک هویتی):</span>
                   <p className="mt-1 text-gray-700 italic">
@@ -111,7 +107,6 @@ const EvidenceDetail = () => {
           </div>
         </div>
 
-        {/* ستون چپ: اطلاعات ثبت و تصویر */}
         <div className="space-y-6">
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
             {evidence.photos ? (

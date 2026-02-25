@@ -27,9 +27,7 @@ class EvidenceViewSet(viewsets.ModelViewSet):
     ordering_fields = ['collected_at', 'created_at']
     ordering = ['-created_at']
 
-    # در views.py
     def perform_create(self, serializer):
-        # فقط سیو خالی، چون یوزر رو توی سریالایزر هندل کردیم
         serializer.save()
 
     @action(detail=True, methods=['post'], url_path='upload-document')
@@ -45,18 +43,14 @@ class EvidenceViewSet(viewsets.ModelViewSet):
         
         file = request.FILES['file']
         
-        # Generate unique filename
         file_ext = os.path.splitext(file.name)[1]
         filename = f"{uuid.uuid4()}{file_ext}"
         upload_path = os.path.join('evidence/documents', filename)
         
-        # Save file
         file_path = default_storage.save(upload_path, ContentFile(file.read()))
         
-        # Get relative URL for the file
         file_url = os.path.join(settings.MEDIA_URL, file_path).replace('\\', '/')
         
-        # Add to evidence documents list
         documents = evidence.documents or []
         documents.append({
             'name': file.name,
