@@ -21,7 +21,6 @@ class ApiService {
       },
     });
 
-
     this.api.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem('token');
@@ -30,7 +29,6 @@ class ApiService {
       },
       (error) => Promise.reject(error)
     );
-
 
     this.api.interceptors.response.use(
       (response) => response,
@@ -47,7 +45,6 @@ class ApiService {
     );
   }
 
-  // Auth Endpoints
   async login(username: string, password: string): Promise<AuthResponse> {
     const response = await this.api.post<AuthResponse>('/auth/users/login/', { username, password });
     return response.data;
@@ -124,14 +121,11 @@ class ApiService {
     return response.data;
   }
 
-
-
   async updateUser(id: number, data: Partial<User>): Promise<User> {
     const response = await this.api.patch<User>(`/auth/users/${id}/`, data);
     return response.data;
   }
 
-  // Evidence Endpoints
   async getEvidence(params?: {
     page?: number;
     case?: number;
@@ -147,7 +141,21 @@ class ApiService {
     return this.getEvidence({ case: caseId });
   }
 
-  // Document Upload
+  // متد جدید برای دریافت جزئیات مدرک
+  async getEvidenceDetail(id: string | number | undefined): Promise<Evidence> {
+    const response = await this.api.get<Evidence>(`/evidence/${id}/`);
+    return response.data;
+  }
+
+  async createEvidence(data: FormData): Promise<Evidence> {
+    const response = await this.api.post<Evidence>('/evidence/', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
   async uploadDocumentToCase(
     caseId: number,
     file: File,
@@ -170,9 +178,10 @@ class ApiService {
     );
     return response.data;
   }
+
   async approveCase(id: number) {
-  return this.api.post(`/cases/${id}/approve/`);
-}
+    return this.api.post(`/cases/${id}/approve//`);
+  }
 }
 
 export const apiService = new ApiService();

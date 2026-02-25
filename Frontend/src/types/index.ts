@@ -24,16 +24,45 @@ export enum CrimeLevel {
   LEVEL_3 = 3,
 }
 
+export enum EvidenceType {
+  BIOLOGICAL = 'BIOLOGICAL',
+  MEDICAL = 'MEDICAL',
+  VEHICLE = 'VEHICLE',
+  IDENTIFICATION = 'IDENTIFICATION',
+  DOCUMENT = 'DOCUMENT',
+  PHOTOGRAPH = 'PHOTOGRAPH',
+  VIDEO = 'VIDEO',
+  AUDIO = 'AUDIO',
+  FINGERPRINT = 'FINGERPRINT',
+  DNA = 'DNA',
+  WEAPON = 'WEAPON',
+  OTHER = 'OTHER',
+}
+
 export interface Evidence {
   id: number;
   evidence_number: string;
   case: number;
+  evidence_type: EvidenceType;
+  evidence_type_display: string;
   description: string;
-  file: string;
-  evidence_type: 'BIOLOGICAL' | 'DOCUMENT' | 'IMAGE' | 'AUDIO';
-  is_verified: boolean;
-  uploaded_by_detail: User;
-  uploaded_at: string;
+  location_found: string | null;
+  collected_at: string;
+  status: string;
+  status_display: string;
+  photos: any[];
+  documents: any[];
+  collected_by_detail: User;
+
+  vehicle_license_plate?: string | null;
+  vehicle_make?: string | null;
+  vehicle_model?: string | null;
+  vehicle_color?: string | null;
+  vin_number?: string | null;
+
+  document_type?: string | null;
+  document_number?: string | null;
+  extra_details?: Record<string, any>;
 }
 
 export enum ComplaintStatus {
@@ -101,6 +130,7 @@ export interface Case {
   is_closed: boolean;
   is_approved: boolean;
   crime_scene?: CrimeScene;
+  evidence_items?: Evidence[];
 }
 
 export interface Complaint {

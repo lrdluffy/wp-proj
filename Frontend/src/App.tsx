@@ -19,6 +19,9 @@ import Pursuit from './pages/Pursuit';
 import Reports from './pages/Reports';
 import Documents from './pages/Documents';
 import Admin from './pages/Admin';
+import EvidenceList from './pages/EvidenceList';
+import EvidenceCreate from './pages/EvidenceCreate';
+import EvidenceDetail from './pages/EvidenceDetail'; // ایمپورت صفحه جزئیات
 
 const RoleBasedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
   const { user } = useAuth();
@@ -63,7 +66,8 @@ function App() {
                   Role.DETECTIVE,
                   Role.SERGEANT,
                   Role.CAPTAIN,
-                  Role.POLICE_CHIEF
+                  Role.POLICE_CHIEF,
+                  Role.MEDICAL_EXAMINER
                 ]} />
               }
             >
@@ -71,6 +75,9 @@ function App() {
               <Route path="/cases/new" element={<CaseCreate />} />
               <Route path="/cases/:id" element={<CaseDetail />} />
               <Route path="/cases/:id/edit" element={<CaseEdit />} />
+              <Route path="/evidence" element={<EvidenceList />} />
+              <Route path="/evidence/new" element={<EvidenceCreate />} />
+              <Route path="/evidence/:id" element={<EvidenceDetail />} /> {/* مسیر جزئیات اضافه شد */}
               <Route path="/pursuit" element={<Pursuit />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/documents" element={<Documents />} />

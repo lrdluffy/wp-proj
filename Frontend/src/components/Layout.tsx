@@ -1,7 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, FileText, Shield, BarChart3, Settings, FilePlus, Inbox } from 'lucide-react';
+import { LogOut, Home, FileText, Shield, BarChart3, Settings, FilePlus, Inbox, Fingerprint } from 'lucide-react';
 import { Role } from '../types';
 
 interface LayoutProps {
@@ -26,7 +26,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const role = user?.role as Role;
   const isCitizen = role === Role.CITIZEN;
-  const isStaff = !isCitizen && role !== Role.TRAINEE; // رده‌های عملیاتی پلیس
+  const isStaff = !isCitizen && role !== Role.TRAINEE;
   const hasDetectiveAccess = [Role.DETECTIVE, Role.SERGEANT, Role.CAPTAIN, Role.POLICE_CHIEF].includes(role);
   const hasAdminAccess = [Role.POLICE_CHIEF, Role.CAPTAIN].includes(role);
 
@@ -92,6 +92,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     >
                       <FileText className="h-5 w-5" />
                       <span>Cases</span>
+                    </Link>
+
+                    <Link
+                      to="/evidence"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/evidence') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <Fingerprint className="h-5 w-5 text-blue-400" />
+                      <span>Evidence Management</span>
                     </Link>
 
                     {hasDetectiveAccess && (
@@ -171,6 +181,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <h2 className="text-xl font-semibold text-gray-800">
               {isActive('/dashboard') && 'Dashboard'}
               {isActive('/cases') && 'Cases'}
+              {isActive('/evidence') && 'Evidence Management'}
               {isActive('/detective-board') && 'Detective Board'}
               {isActive('/pursuit') && 'Under Pursuit'}
               {isActive('/complaints') && 'Complaints Management'}
