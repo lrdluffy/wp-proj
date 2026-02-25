@@ -41,10 +41,21 @@ class CaseSerializer(serializers.ModelSerializer):
     crime_level_display = serializers.CharField(source='get_crime_level_display', read_only=True)
     crime_scene = CrimeSceneSerializer(read_only=True)
 
+    evidence_items = serializers.SerializerMethodField()
     class Meta:
         model = Case
-        fields = '__all__'
+        fields = [
+            'id', 'case_number', 'title', 'description', 'status', 'status_display',
+            'crime_level', 'crime_level_display', 'location', 'reported_at',
+            'is_approved', 'assigned_to', 'assigned_to_detail', 'created_by',
+            'created_by_detail', 'notes', 'plaintiffs_info', 'crime_scene',
+            'evidence_items', 'created_at', 'updated_at'
+        ]
         read_only_fields = ['case_number', 'created_at', 'updated_at', 'is_approved']
+
+    def get_evidence_items(self, obj):
+        from evidence.serializers import EvidenceSerializer
+        return EvidenceSerializer(obj.evidence_items.all(), many=True).data
 
 
 class CaseCreateSerializer(serializers.ModelSerializer):
@@ -52,16 +63,26 @@ class CaseCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Case
-        fields = ['title', 'description', 'crime_level', 'location', 'reported_at', 'notes', 'witnesses',
-                  'plaintiffs_info']
+        fields = [
+            'title', 'description', 'crime_level', 'location',
+            'reported_at', 'notes', 'witnesses', 'plaintiffs_info'
+        ]
 
     def validate_data_list(self, data_list, label):
-        """اعتبارسنجی مشترک برای لیست شاهدان و شاکیان"""
+        if not isinstance(data_list, list):
+            return data_list
+
         for item in data_list:
-            if not re.match(r'^\d{10}$', str(item.get('national_id', ''))):
-                raise serializers.ValidationError(f"کد ملی {item.get('name')} در لیست {label} معتبر نیست.")
-            if not re.match(r'^09\d{9}$', str(item.get('phone', ''))):
-                raise serializers.ValidationError(f"شماره تماس {item.get('name')} در لیست {label} معتبر نیست.")
+            name = item.get('name', 'نامشخص')
+            national_id = str(item.get('national_id', ''))
+            phone = str(item.get('phone', ''))
+
+            if not re.match(r'^\d{10}$', national_id):
+                raise serializers.ValidationError(f"کد ملی {name} در لیست {label} باید ۱۰ رقم باشد.")
+
+            if not re.match(r'^09\d{9}$', phone):
+                raise serializers.ValidationError(f"شماره تماس {name} در لیست {label} معتبر نیست (مثال: 09123456789).")
+
         return data_list
 
     def create(self, validated_data):
@@ -72,6 +93,7 @@ class CaseCreateSerializer(serializers.ModelSerializer):
         self.validate_data_list(plaintiffs, "شاکیان")
 
         user = self.context['request'].user
+
         validated_data['case_number'] = f"CASE-{uuid.uuid4().hex[:8].upper()}"
         validated_data['created_by'] = user
 

@@ -27,8 +27,10 @@ class EvidenceViewSet(viewsets.ModelViewSet):
     ordering_fields = ['collected_at', 'created_at']
     ordering = ['-created_at']
 
+    # در views.py
     def perform_create(self, serializer):
-        serializer.save(collected_by=self.request.user)
+        # فقط سیو خالی، چون یوزر رو توی سریالایزر هندل کردیم
+        serializer.save()
 
     @action(detail=True, methods=['post'], url_path='upload-document')
     def upload_document(self, request, pk=None):
