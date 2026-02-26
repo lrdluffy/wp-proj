@@ -39,7 +39,8 @@ class CaseSerializer(serializers.ModelSerializer):
     created_by_detail = UserSimpleSerializer(source='created_by', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     crime_level_display = serializers.CharField(source='get_crime_level_display', read_only=True)
-    crime_scene = CrimeSceneSerializer(read_only=True)
+    trials = serializers.SerializerMethodField()
+    evidence_items = serializers.SerializerMethodField()
 
     evidence_items = serializers.SerializerMethodField()
     class Meta:
@@ -49,13 +50,17 @@ class CaseSerializer(serializers.ModelSerializer):
             'crime_level', 'crime_level_display', 'location', 'reported_at',
             'is_approved', 'assigned_to', 'assigned_to_detail', 'created_by',
             'created_by_detail', 'notes', 'plaintiffs_info', 'crime_scene',
-            'evidence_items', 'created_at', 'updated_at'
+            'evidence_items', 'created_at', 'updated_at' ,'trials',
         ]
         read_only_fields = ['case_number', 'created_at', 'updated_at', 'is_approved']
 
     def get_evidence_items(self, obj):
         from evidence.serializers import EvidenceSerializer
         return EvidenceSerializer(obj.evidence_items.all(), many=True).data
+
+    def get_trials(self, obj):
+        from trials.serializers import TrialSerializer
+        return TrialSerializer(obj.trials.all(), many=True).data
 
 
 class CaseCreateSerializer(serializers.ModelSerializer):

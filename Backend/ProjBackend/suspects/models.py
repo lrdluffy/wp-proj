@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 from core.models import Case
 
 
@@ -69,6 +70,77 @@ class Suspect(models.Model):
         null=True,
         blank=True
     )
+
+    # Interrogation scoring - sergeant
+    sergeant_probability = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text="Probability of guilt (1-10) as assessed by the sergeant"
+    )
+    sergeant_notes = models.TextField(null=True, blank=True)
+    sergeant_officer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sergeant_interrogations'
+    )
+    sergeant_recorded_at = models.DateTimeField(null=True, blank=True)
+
+    # Interrogation scoring - detective
+    detective_probability = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text="Probability of guilt (1-10) as assessed by the detective"
+    )
+    detective_notes = models.TextField(null=True, blank=True)
+    detective_officer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='detective_interrogations'
+    )
+    detective_recorded_at = models.DateTimeField(null=True, blank=True)
+
+    # Captain final decision
+    captain_probability = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text="Final probability of guilt (1-10) decided by the captain"
+    )
+    captain_statement = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Captain's reasoning based on statements, evidence, and scores"
+    )
+    captain_officer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='captain_decisions'
+    )
+    captain_decided_at = models.DateTimeField(null=True, blank=True)
+
+    # Police chief review for critical crimes
+    chief_approved = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text="Police chief approval of captain decision (only for critical crimes)"
+    )
+    chief_comment = models.TextField(null=True, blank=True)
+    chief_officer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='chief_reviews'
+    )
+    chief_reviewed_at = models.DateTimeField(null=True, blank=True)
 
     # Charges
     charges = models.TextField(null=True, blank=True, help_text="Charges filed against the suspect")
