@@ -116,6 +116,11 @@ class ApiService {
     return this.api.post(`/complaints/${id}/approve_and_create_case/`);
   }
 
+  async getUser(id: number): Promise<User> {
+    const response = await this.api.get<User>(`/auth/users/${id}/`);
+    return response.data;
+  }
+
   async getUsers(params?: any): Promise<PaginatedResponse<User>> {
     const response = await this.api.get<PaginatedResponse<User>>('/auth/users/', { params });
     return response.data;
