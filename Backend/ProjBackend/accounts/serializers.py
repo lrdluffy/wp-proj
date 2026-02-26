@@ -45,4 +45,5 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class UserDetailsSerializer(UserSerializer):
     class Meta:
+        model = User
         fields = UserSerializer.Meta.fields + ['last_login']
