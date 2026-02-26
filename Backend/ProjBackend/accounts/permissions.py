@@ -46,9 +46,19 @@ class IsPoliceChief(permissions.BasePermission):
 
 
 class CanHandleCrimeLevel(permissions.BasePermission):
+    def has_permission(self, request, view):
+        # اجازه ورود اولیه به همه کاربران لاگین شده (پلیس)
+        return request.user and request.user.is_authenticated
+
     def has_object_permission(self, request, view, obj):
-        if not request.user or not request.user.is_authenticated:
-            return False
+        # اگر کاربر پلیس است، اجازه بده همه فایل‌ها را ببیند
+        if request.user.role in [
+            Role.POLICE_OFFICER, Role.PATROL_OFFICER, Role.DETECTIVE,
+            Role.SERGEANT, Role.CAPTAIN, Role.POLICE_CHIEF
+        ]:
+            return True
+
+        # برای سایرین (مثل Citizen) چک کن
         if hasattr(obj, 'crime_level'):
             return request.user.can_handle_crime_level(obj.crime_level)
         return False

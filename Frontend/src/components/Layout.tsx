@@ -183,7 +183,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               {isActive('/cases') && 'Cases'}
               {isActive('/evidence') && 'Evidence Management'}
               {isActive('/detective-board') && 'Detective Board'}
-              {isActive('/pursuit') && 'Under Pursuit'}
+              {isActive('/pursuit') && 'Under UnderPursuit'}
               {isActive('/complaints') && 'Complaints Management'}
               {isActive('/complaints/new') && 'Submit New Complaint'}
               {location.pathname.includes('/complaints/edit') && 'Edit Complaint'}

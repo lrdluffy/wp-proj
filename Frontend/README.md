@@ -10,7 +10,7 @@ A modern React + TypeScript frontend application for the Police Case Management 
 - 📁 **Case Management** - View, filter, and manage police cases
 - 🚨 **Complaints** - Review and process citizen complaints
 - 🕵️ **Detective Board** - Manage active investigations
-- ⚡ **Under Intense Pursuit** - High-priority cases requiring immediate attention
+- ⚡ **Under Intense UnderPursuit** - High-priority cases requiring immediate attention
 - 📈 **Reports** - Analytics and statistics
 - 📄 **Documents** - Document registration and review
 - 👥 **Admin Panel** - User management (Chief/Captain only)

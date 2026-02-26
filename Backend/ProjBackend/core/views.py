@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from accounts import permissions
 from accounts.permissions import IsDetectiveOrHigher, IsOfficerOrHigher
 from core.models import Case, CrimeScene, Complaint, ComplaintStatus
 from core.serializers import (
@@ -38,6 +39,8 @@ class CaseViewSet(viewsets.ModelViewSet):
         return CaseSerializer
 
     def get_permissions(self):
+        if self.action == 'retrieve':  # همان دکمه View
+            return [IsAuthenticated()]  # موقتاً فقط چک کند لاگین است یا نه
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsOfficerOrHigher()]
         return [IsAuthenticated()]

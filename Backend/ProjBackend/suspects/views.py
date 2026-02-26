@@ -32,6 +32,17 @@ class SuspectViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'identified_at', 'arrest_date']
     ordering = ['-created_at']
 
+    def get_queryset(self):
+        queryset = Suspect.objects.all()
+        in_pursuit = self.request.query_params.get('in_pursuit', None)
+
+        if in_pursuit == 'true':
+            return queryset.filter(
+                case__is_approved=True
+            ).exclude(status=SuspectStatus.IN_CUSTODY)
+
+        return queryset
+
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsDetectiveOrHigher()]
@@ -41,19 +52,11 @@ class SuspectViewSet(viewsets.ModelViewSet):
         serializer.save(identified_by=self.request.user)
 
     def _create_trial_for_suspect(self, suspect: Suspect):
-        """
-        Create a trial for the given suspect/case pair if one does not already exist,
-        and move the case to AWAITING_TRIAL according to the project spec.
-        """
         case: Case = suspect.case
-
-        # If a trial already exists for this suspect and case, don't duplicate
         existing = Trial.objects.filter(case=case, suspect=suspect).first()
         if existing:
             return existing
-
         trial_number = f"TRIAL-{uuid.uuid4().hex[:8].upper()}"
-
         trial = Trial.objects.create(
             case=case,
             suspect=suspect,
@@ -62,71 +65,40 @@ class SuspectViewSet(viewsets.ModelViewSet):
             scheduled_date=timezone.now() + timedelta(days=7),
             court_name="Criminal Court of Justice",
         )
-
-        # Move case to awaiting trial if not already there or beyond
         if case.status != CaseStatus.AWAITING_TRIAL:
             case.status = CaseStatus.AWAITING_TRIAL
             case.save(update_fields=['status'])
-
         return trial
 
     @action(detail=True, methods=['post'], permission_classes=[IsSergeantOrHigher])
     def arrest(self, request, pk=None):
-        """
-        Sergeant (or higher) confirms detective's suspect and starts arrest (custody).
-        """
         suspect = self.get_object()
-
         if suspect.status == SuspectStatus.IN_CUSTODY:
-            return Response(
-                {'detail': 'Suspect is already in custody.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Suspect is already in custody.'}, status=status.HTTP_400_BAD_REQUEST)
         if suspect.status in [SuspectStatus.RELEASED, SuspectStatus.CLEARED]:
-            return Response(
-                {'detail': 'Cannot arrest a suspect who is released or cleared.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # مطابق سند، پس از تایید گروهبان دستگیری مظنونین شروع می‌شود
+            return Response({'detail': 'Cannot arrest a suspect who is released or cleared.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         suspect.status = SuspectStatus.IN_CUSTODY
         suspect.arrest_date = timezone.now()
         suspect.save()
-
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[IsDetectiveOrHigher])
     def record_interrogation_score(self, request, pk=None):
-        """
-        Record probability of guilt for a suspect by a sergeant or detective (1-10).
-        """
         suspect = self.get_object()
-
         if not suspect.is_in_custody:
-            return Response(
-                {'detail': 'Interrogation scoring is only allowed when the suspect is in custody.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Interrogation scoring is only allowed when the suspect is in custody.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             probability = int(request.data.get('probability'))
         except (TypeError, ValueError):
-            return Response(
-                {'detail': 'Probability must be an integer between 1 and 10.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Probability must be an integer between 1 and 10.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         if probability < 1 or probability > 10:
-            return Response(
-                {'detail': 'Probability must be between 1 and 10.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Probability must be between 1 and 10.'}, status=status.HTTP_400_BAD_REQUEST)
         notes = request.data.get('notes', '')
         user = request.user
-
         if user.role == Role.SERGEANT:
             suspect.sergeant_probability = probability
             suspect.sergeant_notes = notes
@@ -138,91 +110,54 @@ class SuspectViewSet(viewsets.ModelViewSet):
             suspect.detective_officer = user
             suspect.detective_recorded_at = timezone.now()
         else:
-            return Response(
-                {'detail': 'Only detectives and sergeants can record interrogation scores.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
+            return Response({'detail': 'Only detectives and sergeants can record interrogation scores.'},
+                            status=status.HTTP_403_FORBIDDEN)
         suspect.save()
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[IsCaptainOrHigher])
     def captain_decision(self, request, pk=None):
-        """
-        Captain records final decision based on statements, evidence and scores.
-        """
         suspect = self.get_object()
-
         if suspect.sergeant_probability is None or suspect.detective_probability is None:
             return Response(
                 {'detail': 'Both sergeant and detective must record their probabilities before the captain decision.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+                status=status.HTTP_400_BAD_REQUEST)
         try:
             final_probability = int(request.data.get('final_probability'))
         except (TypeError, ValueError):
-            return Response(
-                {'detail': 'Final probability must be an integer between 1 and 10.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Final probability must be an integer between 1 and 10.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         if final_probability < 1 or final_probability > 10:
-            return Response(
-                {'detail': 'Final probability must be between 1 and 10.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Final probability must be between 1 and 10.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         statement = (request.data.get('statement') or '').strip()
         if not statement:
-            return Response(
-                {'detail': 'Statement is required.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Statement is required.'}, status=status.HTTP_400_BAD_REQUEST)
         suspect.captain_probability = final_probability
         suspect.captain_statement = statement
         suspect.captain_officer = request.user
         suspect.captain_decided_at = timezone.now()
         suspect.save()
-
-        # مطابق مستند، پس از نظر نهایی کاپیتان پرونده برای محاکمه ارسال می‌شود
-        # در جرائم سطح بحرانی (LEVEL_1) این ارسال بعد از تایید رئیس پلیس انجام می‌شود
         case = suspect.case
         if case.crime_level != CrimeLevel.LEVEL_1:
             self._create_trial_for_suspect(suspect)
-
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[IsPoliceChief])
     def chief_review(self, request, pk=None):
-        """
-        Police chief approves or rejects captain's opinion for critical (level 1) crimes.
-        """
         suspect = self.get_object()
         case = suspect.case
-
         if case.crime_level != CrimeLevel.LEVEL_1:
-            return Response(
-                {'detail': 'Chief review is only required for critical (level 1) crimes.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Chief review is only required for critical (level 1) crimes.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         if suspect.captain_probability is None or suspect.captain_officer is None:
-            return Response(
-                {'detail': 'Chief review is only possible after a captain decision has been recorded.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Chief review is only possible after a captain decision has been recorded.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         approved = request.data.get('approved', None)
         if approved is None:
-            return Response(
-                {'detail': 'Field "approved" is required.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return Response({'detail': 'Field "approved" is required.'}, status=status.HTTP_400_BAD_REQUEST)
         if isinstance(approved, str):
             approved_normalized = approved.lower()
             if approved_normalized in ['true', '1', 'yes']:
@@ -230,24 +165,16 @@ class SuspectViewSet(viewsets.ModelViewSet):
             elif approved_normalized in ['false', '0', 'no']:
                 approved_value = False
             else:
-                return Response(
-                    {'detail': 'Field "approved" must be a boolean.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                return Response({'detail': 'Field "approved" must be a boolean.'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             approved_value = bool(approved)
-
         comment = request.data.get('comment', '')
-
         suspect.chief_approved = approved_value
         suspect.chief_comment = comment
         suspect.chief_officer = request.user
         suspect.chief_reviewed_at = timezone.now()
         suspect.save()
-
-        # در جرائم سطح بحرانی، فقط پس از تایید رئیس پلیس پرونده به محاکمه می‌رود
         if approved_value:
             self._create_trial_for_suspect(suspect)
-
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)

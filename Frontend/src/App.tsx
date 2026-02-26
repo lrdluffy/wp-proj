@@ -15,7 +15,7 @@ import CaseEdit from './pages/CaseEdit';
 import ComplaintList from './pages/ComplaintList';
 import ComplaintForm from './pages/ComplaintForm';
 import DetectiveBoard from './pages/DetectiveBoard';
-import Pursuit from './pages/Pursuit';
+import UnderPursuit from './pages/UnderPursuit';
 import Reports from './pages/Reports';
 import Documents from './pages/Documents';
 import Admin from './pages/Admin';
@@ -78,7 +78,7 @@ function App() {
               <Route path="/evidence" element={<EvidenceList />} />
               <Route path="/evidence/new" element={<EvidenceCreate />} />
               <Route path="/evidence/:id" element={<EvidenceDetail />} /> {/* مسیر جزئیات اضافه شد */}
-              <Route path="/pursuit" element={<Pursuit />} />
+              <Route path="/pursuit" element={<UnderPursuit />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/documents" element={<Documents />} />
             </Route>
