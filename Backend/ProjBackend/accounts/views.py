@@ -9,8 +9,7 @@ from accounts.models import User
 from accounts.serializers import (
     UserSerializer, UserRegistrationSerializer, UserDetailsSerializer
 )
-from accounts.permissions import IsPoliceChiefOrHigher, IsCaptainOrHigher
-
+from accounts.permissions import IsPoliceChief, IsCaptainOrHigher
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -21,14 +20,16 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['username', 'email', 'first_name', 'last_name', 'badge_number', 'phone_number']
 
     def get_serializer_class(self):
-        if self.action == 'retrieve' or self.action == 'update':
+        if self.action == 'register' or self.action == 'create':
+            return UserRegistrationSerializer
+        if self.action in ['retrieve', 'update', 'me']:
             return UserDetailsSerializer
         return UserSerializer
-    
+
     def get_permissions(self):
-        if self.action in ['create', 'register', 'login']:
+        if self.action in ['register', 'login', 'create']:
             return [AllowAny()]
-        elif self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ['update', 'partial_update', 'destroy']:
             return [IsCaptainOrHigher()]
         return [IsAuthenticated()]
 

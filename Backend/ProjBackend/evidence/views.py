@@ -28,7 +28,7 @@ class EvidenceViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def perform_create(self, serializer):
-        serializer.save(collected_by=self.request.user)
+        serializer.save()
 
     @action(detail=True, methods=['post'], url_path='upload-document')
     def upload_document(self, request, pk=None):
@@ -43,18 +43,14 @@ class EvidenceViewSet(viewsets.ModelViewSet):
         
         file = request.FILES['file']
         
-        # Generate unique filename
         file_ext = os.path.splitext(file.name)[1]
         filename = f"{uuid.uuid4()}{file_ext}"
         upload_path = os.path.join('evidence/documents', filename)
         
-        # Save file
         file_path = default_storage.save(upload_path, ContentFile(file.read()))
         
-        # Get relative URL for the file
         file_url = os.path.join(settings.MEDIA_URL, file_path).replace('\\', '/')
         
-        # Add to evidence documents list
         documents = evidence.documents or []
         documents.append({
             'name': file.name,

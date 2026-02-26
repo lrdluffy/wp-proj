@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from core.models import Case
 
 
@@ -34,20 +35,17 @@ class Evidence(models.Model):
         related_name='evidence_items'
     )
 
-    # Evidence details
     evidence_type = models.CharField(max_length=31, choices=EvidenceType.choices)
     description = models.TextField()
     location_found = models.CharField(max_length=511, null=True, blank=True)
     collected_at = models.DateTimeField()
 
-    # Evidence handling
     status = models.CharField(
         max_length=31,
         choices=EvidenceStatus.choices,
         default=EvidenceStatus.COLLECTED
     )
 
-    # Files and media
     photos = models.JSONField(
         default=list,
         help_text="List of photo file paths"
@@ -57,14 +55,12 @@ class Evidence(models.Model):
         help_text="List of document file paths"
     )
 
-    # Storage information
     storage_location = models.CharField(max_length=255, null=True, blank=True)
     chain_of_custody = models.JSONField(
         default=list,
         help_text="List of custody transfers with timestamps and officers"
     )
 
-    # Relationships
     collected_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -79,7 +75,6 @@ class Evidence(models.Model):
         related_name='analyzed_evidence'
     )
 
-    # Analysis results
     analysis_results = models.TextField(null=True, blank=True)
     analysis_date = models.DateTimeField(null=True, blank=True)
 
@@ -95,9 +90,7 @@ class Evidence(models.Model):
         return f"{self.evidence_number} - {self.get_evidence_type_display()}"
 
 
-# Specific evidence models for detailed tracking
 class BiologicalEvidence(Evidence):
-    """Biological evidence (DNA, blood, etc.)"""
     sample_type = models.CharField(max_length=127)  # blood, hair, saliva, etc.
     lab_reference_number = models.CharField(max_length=127, null=True, blank=True)
 
@@ -107,7 +100,6 @@ class BiologicalEvidence(Evidence):
 
 
 class MedicalEvidence(Evidence):
-    """Medical/forensic evidence"""
     examiner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -136,14 +128,28 @@ class VehicleEvidence(Evidence):
         verbose_name = 'Vehicle Evidence'
         verbose_name_plural = 'Vehicle Evidence'
 
+    def clean(self):
+        if self.vehicle_license_plate and self.vin_number:
+            raise ValidationError("شماره پلاک و شماره سریال (VIN) نمی‌توانند همزمان مقدار داشته باشند.")
+        if not self.vehicle_license_plate and not self.vin_number:
+            raise ValidationError("باید حداقل یکی از مقادیر پلاک یا شماره سریال وارد شود.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class IdentificationEvidence(Evidence):
-    """Identification documents evidence"""
     document_type = models.CharField(max_length=127)  # ID card, passport, driver's license, etc.
     document_number = models.CharField(max_length=127, null=True, blank=True)
     issued_by = models.CharField(max_length=127, null=True, blank=True)
     issue_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
+    extra_details = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Custom key-value pairs for specific document information"
+    )
 
     class Meta:
         verbose_name = 'Identification Evidence'

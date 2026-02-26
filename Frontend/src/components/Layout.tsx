@@ -1,7 +1,8 @@
 import React, { type ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Home, FileText, Shield, BarChart3, Settings } from 'lucide-react';
+import { LogOut, Home, FileText, Shield, BarChart3, Settings, FilePlus, Inbox, Fingerprint } from 'lucide-react';
+import { Role } from '../types';
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,95 +19,131 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   if (!isAuthenticated) {
-    return <>{children}</>;
+    return <div className="min-h-screen bg-gray-50">{children}</div>;
   }
 
   const isActive = (path: string) => location.pathname === path;
 
+  const role = user?.role as Role;
+  const isCitizen = role === Role.CITIZEN;
+  const isStaff = !isCitizen && role !== Role.TRAINEE;
+  const hasDetectiveAccess = [Role.DETECTIVE, Role.SERGEANT, Role.CAPTAIN, Role.POLICE_CHIEF].includes(role);
+  const hasAdminAccess = [Role.POLICE_CHIEF, Role.CAPTAIN].includes(role);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 z-50 h-full w-64 bg-gray-900 text-white shadow-lg">
+    <div className="min-h-screen bg-gray-50 flex" dir="ltr">
+      <aside className="fixed left-0 top-0 z-50 h-full w-64 bg-gray-900 text-white shadow-lg overflow-y-auto">
         <div className="flex h-full flex-col">
-          <div className="flex h-16 items-center justify-center border-b border-gray-800">
-            <h1 className="text-xl font-bold">Police System</h1>
+          <div className="flex h-16 items-center justify-center border-b border-gray-800 shrink-0">
+            <h1 className="text-xl font-bold text-blue-400">Police System</h1>
           </div>
-          
+
           <nav className="flex-1 space-y-1 p-4">
             <Link
               to="/dashboard"
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                isActive('/dashboard') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                isActive('/dashboard') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-800'
               }`}
             >
               <Home className="h-5 w-5" />
               <span>Dashboard</span>
             </Link>
 
-            <Link
-              to="/cases"
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                isActive('/cases') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <FileText className="h-5 w-5" />
-              <span>Cases</span>
-            </Link>
+            {isCitizen ? (
+              <>
+                <Link
+                  to="/complaints/new"
+                  className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                    isActive('/complaints/new') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  <FilePlus className="h-5 w-5 text-green-400" />
+                  <span>New Complaint</span>
+                </Link>
+                <Link
+                  to="/complaints"
+                  className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                    isActive('/complaints') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  <Inbox className="h-5 w-5 text-orange-400" />
+                  <span>My Complaints</span>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/complaints"
+                  className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                    isActive('/complaints') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  <Inbox className="h-5 w-5 text-yellow-400" />
+                  <span>Manage Complaints</span>
+                </Link>
 
-            <Link
-              to="/detective-board"
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                isActive('/detective-board') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <Shield className="h-5 w-5" />
-              <span>Detective Board</span>
-            </Link>
+                {isStaff && (
+                  <>
+                    <Link
+                      to="/cases"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/cases') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <FileText className="h-5 w-5" />
+                      <span>Cases</span>
+                    </Link>
 
-            <Link
-              to="/pursuit"
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                isActive('/pursuit') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <Shield className="h-5 w-5" />
-              <span>Under Pursuit</span>
-            </Link>
+                    <Link
+                      to="/evidence"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/evidence') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <Fingerprint className="h-5 w-5 text-blue-400" />
+                      <span>Evidence Management</span>
+                    </Link>
 
-            <Link
-              to="/complaints"
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                isActive('/complaints') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <FileText className="h-5 w-5" />
-              <span>Complaints</span>
-            </Link>
+                    {hasDetectiveAccess && (
+                      <Link
+                        to="/detective-board"
+                        className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                          isActive('/detective-board') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                        }`}
+                      >
+                        <Shield className="h-5 w-5 text-purple-400" />
+                        <span>Detective Board</span>
+                      </Link>
+                    )}
 
-            <Link
-              to="/reports"
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                isActive('/reports') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <BarChart3 className="h-5 w-5" />
-              <span>Reports</span>
-            </Link>
+                    <Link
+                      to="/pursuit"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/pursuit') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <Shield className="h-5 w-5 text-red-400" />
+                      <span>Under Pursuit</span>
+                    </Link>
 
-            <Link
-              to="/documents"
-              className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                isActive('/documents') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-              }`}
-            >
-              <FileText className="h-5 w-5" />
-              <span>Documents</span>
-            </Link>
+                    <Link
+                      to="/reports"
+                      className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
+                        isActive('/reports') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      <BarChart3 className="h-5 w-5 text-cyan-400" />
+                      <span>Reports</span>
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
 
-            {(user?.role === 'POLICE_CHIEF' || user?.role === 'CAPTAIN') && (
+            {hasAdminAccess && (
               <Link
                 to="/admin"
-                className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
+                className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-all ${
                   isActive('/admin') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'
                 }`}
               >
@@ -116,21 +153,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             )}
           </nav>
 
-          <div className="border-t border-gray-800 p-4">
+          <div className="border-t border-gray-800 p-4 shrink-0">
             <div className="mb-3 flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600">
-                <span className="text-sm font-semibold">
-                  {user?.first_name?.[0] || user?.username?.[0] || 'U'}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 shrink-0">
+                <span className="text-sm font-semibold text-white">
+                  {user?.username?.[0].toUpperCase() || 'U'}
                 </span>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{user?.full_name || user?.username}</p>
-                <p className="text-xs text-gray-400">{user?.role_display}</p>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-medium truncate text-white">{user?.full_name || user?.username}</p>
+                <p className="text-xs text-gray-400 truncate">{user?.role_display || user?.role}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="flex w-full items-center space-x-3 rounded-lg px-4 py-2 text-gray-300 transition-colors hover:bg-gray-800"
+              className="flex w-full items-center space-x-3 rounded-lg px-4 py-2 text-gray-300 transition-colors hover:bg-red-900/30 hover:text-red-400"
             >
               <LogOut className="h-5 w-5" />
               <span>Logout</span>
@@ -139,28 +176,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-40 p-4">
-        <h1 className="text-xl font-bold text-gray-900">Police System</h1>
-      </div>
-
-      {/* Main content */}
-      <div className="lg:ml-64 pt-16 lg:pt-0">
-        <header className="sticky top-0 z-10 bg-white shadow-sm">
-          <div className="flex h-16 items-center justify-between px-6">
+      <div className="flex-1 ml-64 min-h-screen flex flex-col">
+        <header className="sticky top-0 z-10 bg-white shadow-sm h-16 flex items-center px-6 shrink-0">
             <h2 className="text-xl font-semibold text-gray-800">
-              {location.pathname === '/dashboard' && 'Dashboard'}
-              {location.pathname === '/cases' && 'Cases'}
-              {location.pathname === '/detective-board' && 'Detective Board'}
-              {location.pathname === '/pursuit' && 'Under Intense Pursuit'}
-              {location.pathname === '/complaints' && 'Complaints'}
-              {location.pathname === '/reports' && 'Reports'}
-              {location.pathname === '/documents' && 'Documents'}
-              {location.pathname === '/admin' && 'Admin Panel'}
+              {isActive('/dashboard') && 'Dashboard'}
+              {isActive('/cases') && 'Cases'}
+              {isActive('/evidence') && 'Evidence Management'}
+              {isActive('/detective-board') && 'Detective Board'}
+              {isActive('/pursuit') && 'Under Pursuit'}
+              {isActive('/complaints') && 'Complaints Management'}
+              {isActive('/complaints/new') && 'Submit New Complaint'}
+              {location.pathname.includes('/complaints/edit') && 'Edit Complaint'}
+              {isActive('/reports') && 'Reports'}
+              {isActive('/admin') && 'Admin Panel'}
             </h2>
-          </div>
         </header>
-        <main className="p-6">{children}</main>
+        <main className="p-6 flex-1">{children}</main>
       </div>
     </div>
   );

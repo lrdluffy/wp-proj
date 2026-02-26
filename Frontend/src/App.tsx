@@ -1,20 +1,39 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import { Role } from './types';
 
-// Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Cases from './pages/Cases';
-import Complaints from './pages/Complaints';
+import CaseCreate from './pages/CaseCreate';
+import CaseDetail from './pages/CaseDetail';
+import CaseEdit from './pages/CaseEdit';
+import ComplaintList from './pages/ComplaintList';
+import ComplaintForm from './pages/ComplaintForm';
 import DetectiveBoard from './pages/DetectiveBoard';
 import Pursuit from './pages/Pursuit';
 import Reports from './pages/Reports';
 import Documents from './pages/Documents';
 import Admin from './pages/Admin';
+import EvidenceList from './pages/EvidenceList';
+import EvidenceCreate from './pages/EvidenceCreate';
+import EvidenceDetail from './pages/EvidenceDetail'; // ایمپورت صفحه جزئیات
+
+const RoleBasedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
+  const { user } = useAuth();
+
+  if (!user) return <Navigate to="/login" />;
+
+  if (!user.role || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
+};
 
 function App() {
   return (
@@ -24,86 +43,68 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
           <Route
-            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Dashboard />
+                  <Outlet />
                 </Layout>
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="/cases"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Cases />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/complaints"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Complaints />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/detective-board"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <DetectiveBoard />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/pursuit"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Pursuit />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Reports />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/documents"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Documents />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Admin />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/complaints" element={<ComplaintList />} />
+            <Route path="/complaints/new" element={<ComplaintForm />} />
+            <Route path="/complaints/edit/:id" element={<ComplaintForm />} />
+
+            <Route
+              element={
+                <RoleBasedRoute allowedRoles={[
+                  Role.POLICE_OFFICER,
+                  Role.PATROL_OFFICER,
+                  Role.DETECTIVE,
+                  Role.SERGEANT,
+                  Role.CAPTAIN,
+                  Role.POLICE_CHIEF,
+                  Role.MEDICAL_EXAMINER
+                ]} />
+              }
+            >
+              <Route path="/cases" element={<Cases />} />
+              <Route path="/cases/new" element={<CaseCreate />} />
+              <Route path="/cases/:id" element={<CaseDetail />} />
+              <Route path="/cases/:id/edit" element={<CaseEdit />} />
+              <Route path="/evidence" element={<EvidenceList />} />
+              <Route path="/evidence/new" element={<EvidenceCreate />} />
+              <Route path="/evidence/:id" element={<EvidenceDetail />} /> {/* مسیر جزئیات اضافه شد */}
+              <Route path="/pursuit" element={<Pursuit />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/documents" element={<Documents />} />
+            </Route>
+
+            <Route
+              element={
+                <RoleBasedRoute allowedRoles={[
+                  Role.DETECTIVE,
+                  Role.SERGEANT,
+                  Role.CAPTAIN,
+                  Role.POLICE_CHIEF
+                ]} />
+              }
+            >
+              <Route path="/detective-board" element={<DetectiveBoard />} />
+            </Route>
+
+            <Route
+              element={
+                <RoleBasedRoute allowedRoles={[Role.POLICE_CHIEF, Role.CAPTAIN]} />
+              }
+            >
+              <Route path="/admin" element={<Admin />} />
+            </Route>
+          </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

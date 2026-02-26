@@ -1,12 +1,12 @@
 from django.db import models
-
-from ProjBackend import settings
+from django.conf import settings
+from django.utils import timezone
 
 
 class CrimeLevel(models.IntegerChoices):
-    LEVEL_1 = 1, 'Level 1'  # Most severe
-    LEVEL_2 = 2, 'Level 2'  # Moderate
-    LEVEL_3 = 3, 'Level 3'  # Least severe
+    LEVEL_1 = 1, 'Level 1'
+    LEVEL_2 = 2, 'Level 2'
+    LEVEL_3 = 3, 'Level 3'
 
 
 class CaseStatus(models.TextChoices):
@@ -17,62 +17,82 @@ class CaseStatus(models.TextChoices):
     ARCHIVED = 'ARCHIVED', 'Archived'
 
 
-class Case(models.Model):
-    case_number = models.CharField(
-        max_length=63,
-        unique=True
+class ComplaintStatus(models.TextChoices):
+    PENDING = 'PENDING', 'Pending Review'
+    RETURNED_TO_CITIZEN = 'RETURNED', 'Returned for Correction'
+    SENT_TO_OFFICER = 'SENT_TO_OFFICER', 'Sent to Officer'
+    VOID = 'VOID', 'Voided (3 Strikes)'
+    APPROVED = 'APPROVED', 'Converted to Case'
+
+
+class Complaint(models.Model):
+    citizen = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='my_complaints'
     )
-    title = models.CharField(
-        max_length=127
-    )
+    title = models.CharField(max_length=255)
     description = models.TextField()
-    crime_level = models.IntegerField(
-        choices=CrimeLevel.choices,
-        default=CrimeLevel.LEVEL_3
-    )
     status = models.CharField(
         max_length=31,
-        choices=CaseStatus.choices,
-        default=CaseStatus.PENDING
+        choices=ComplaintStatus.choices,
+        default=ComplaintStatus.PENDING
     )
+    rejection_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Count of returns for corrections. Max is 3."
+    )
+    trainee_feedback = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    # Relationships
+    def __str__(self):
+        return f"Complaint: {self.title} by {self.citizen.username}"
+
+
+class Case(models.Model):
+    case_number = models.CharField(max_length=63, unique=True)
+    title = models.CharField(max_length=127)
+    description = models.TextField()
+    crime_level = models.IntegerField(choices=CrimeLevel.choices, default=CrimeLevel.LEVEL_3)
+    status = models.CharField(max_length=31, choices=CaseStatus.choices, default=CaseStatus.PENDING)
+
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='assigned_cases',
-        help_text='Primary officer/detective assigned to this case',
+        null=True, blank=True,
+        related_name='assigned_cases'
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='created_cases',
+        related_name='created_cases'
     )
 
-    # Timestamps
-    reported_at = models.DateTimeField(help_text="When the crime was reported")
+    is_approved = models.BooleanField(
+        default=False,
+        help_text="Requires approval from a higher rank unless created by Chief."
+    )
+
+    plaintiffs_info = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of plaintiffs: [{'name': '', 'phone': '', 'national_id': ''}]"
+    )
+
+    reported_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     closed_at = models.DateTimeField(null=True, blank=True)
-
-    # Additional information
     location = models.CharField(max_length=511, null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'Case'
-        verbose_name_plural = 'Cases'
 
     def __str__(self):
         return f"{self.case_number} - {self.title}"
-
-    @property
-    def is_closed(self):
-        return self.status == CaseStatus.CLOSED or self.status == CaseStatus.ARCHIVED
 
 
 class CrimeScene(models.Model):
@@ -81,35 +101,23 @@ class CrimeScene(models.Model):
         on_delete=models.CASCADE,
         related_name='crime_scene',
         null=True,
-        blank=True,
+        blank=True
     )
     location = models.CharField(max_length=511)
     description = models.TextField()
-    occurred_at = models.DateTimeField(help_text="When the crime occurred")
-    discovered_at = models.DateTimeField(help_text="When the crime scene was discovered")
+    occurred_at = models.DateTimeField()
+    discovered_at = models.DateTimeField()
 
-    # Scene details
-    weather_conditions = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True
-    )
-    lighting_conditions = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True
-    )
-    scene_sketch = models.ImageField(
-        upload_to='crime_scenes/sketches/',
-        null=True,
-        blank=True
-    )
-    scene_photos = models.JSONField(
+    witnesses_info = models.JSONField(
         default=list,
-        help_text="List of photo file paths"
+        help_text="List of witnesses: {'name': '', 'phone': '', 'national_id': ''}"
     )
 
-    # Relationships
+    weather_conditions = models.CharField(max_length=255, null=True, blank=True)
+    lighting_conditions = models.CharField(max_length=255, null=True, blank=True)
+    scene_sketch = models.ImageField(upload_to='crime_scenes/sketches/', null=True, blank=True)
+    scene_photos = models.JSONField(default=list)
+
     discovered_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -129,8 +137,6 @@ class CrimeScene(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'Crime Scene'
-        verbose_name_plural = 'Crime Scenes'
 
     def __str__(self):
-        return f"Crime Scene at {self.location}"
+        return f"Scene for Case: {self.case.case_number if self.case else 'Unassigned'}"
