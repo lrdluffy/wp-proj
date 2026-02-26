@@ -131,6 +131,45 @@ export interface Case {
   is_approved: boolean;
   crime_scene?: CrimeScene;
   evidence_items?: Evidence[];
+  trials?: Trial[];
+}
+
+export interface Suspect {
+  id: number;
+  case: number;
+  case_detail?: Case;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  status: string;
+  status_display: string;
+  identified_by: number | null;
+  identified_by_detail: User | null;
+  identified_at: string | null;
+  national_id?: string | null;
+  phone_number?: string | null;
+  arrest_date: string | null;
+  is_in_custody: boolean;
+  sergeant_probability?: number | null;
+  sergeant_notes?: string | null;
+  sergeant_officer?: number | null;
+  sergeant_officer_detail?: User | null;
+  sergeant_recorded_at?: string | null;
+  detective_probability?: number | null;
+  detective_notes?: string | null;
+  detective_officer?: number | null;
+  detective_officer_detail?: User | null;
+  detective_recorded_at?: string | null;
+  captain_probability?: number | null;
+  captain_statement?: string | null;
+  captain_officer?: number | null;
+  captain_officer_detail?: User | null;
+  captain_decided_at?: string | null;
+  chief_approved?: boolean | null;
+  chief_comment?: string | null;
+  chief_officer?: number | null;
+  chief_officer_detail?: User | null;
+  chief_reviewed_at?: string | null;
 }
 
 export interface Complaint {
@@ -159,4 +198,29 @@ export interface PaginatedResponse<T> {
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
+
+export enum TrialStatus {
+  SCHEDULED = 'SCHEDULED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  POSTPONED = 'POSTPONED',
+}
+
+export interface Trial {
+  id: number;
+  case: number;
+  case_detail?: Case;
+  suspect: number;
+  suspect_detail?: Suspect;
+  trial_number: string;
+  status: TrialStatus;
+  status_display: string;
+  scheduled_date: string;
+  court_name: string;
+  verdict?: string;
+  verdict_display?: string;
+  sentence?: string;
+  is_completed: boolean;
 }

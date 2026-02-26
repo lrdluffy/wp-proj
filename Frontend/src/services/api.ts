@@ -1,11 +1,12 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios';
-import type { 
-  User, 
-  AuthResponse, 
-  Case, 
-  Complaint, 
+import type {
+  User,
+  AuthResponse,
+  Case,
+  Complaint,
   PaginatedResponse,
-  Evidence
+  Evidence,
+  Suspect, Trial,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
@@ -182,6 +183,49 @@ class ApiService {
   async approveCase(id: number) {
     return this.api.post(`/cases/${id}/approve//`);
   }
+
+  async getSuspects(params?: any): Promise<PaginatedResponse<Suspect>> {
+    const response = await this.api.get<PaginatedResponse<Suspect>>('/suspects/', { params });
+    return response.data;
+  }
+
+  async createSuspect(data: Partial<Suspect>): Promise<Suspect> {
+    const response = await this.api.post<Suspect>('/suspects/', data);
+    return response.data;
+  }
+
+  async arrestSuspect(suspectId: number): Promise<Suspect> {
+    const response = await this.api.post<Suspect>(`/suspects/${suspectId}/arrest/`);
+    return response.data;
+  }
+
+  async recordInterrogationScore(
+    suspectId: number,
+    payload: { probability: number; notes?: string }
+  ): Promise<Suspect> {
+    const response = await this.api.post<Suspect>(`/suspects/${suspectId}/record_interrogation_score/`, payload);
+    return response.data;
+  }
+
+  async submitCaptainDecision(
+    suspectId: number,
+    payload: { final_probability: number; statement: string }
+  ): Promise<Suspect> {
+    const response = await this.api.post<Suspect>(`/suspects/${suspectId}/captain_decision/`, payload);
+    return response.data;
+  }
+
+  async submitChiefReview(
+    suspectId: number,
+    payload: { approved: boolean; comment?: string }
+  ): Promise<Suspect> {
+    const response = await this.api.post<Suspect>(`/suspects/${suspectId}/chief_review/`, payload);
+    return response.data;
+  }
+  async getTrials(params?: any): Promise<PaginatedResponse<Trial>> {
+  const response = await this.api.get<PaginatedResponse<Trial>>('/trials/', { params });
+  return response.data;
+}
 }
 
 export const apiService = new ApiService();
