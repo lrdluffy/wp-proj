@@ -20,8 +20,43 @@ from accounts.permissions import (
     IsPoliceChief,
     IsSergeantOrHigher,
 )
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
 
 
+@extend_schema_view(
+    list=extend_schema(
+        description='List suspects (paginated).',
+        responses={200: OpenApiTypes.OBJECT},
+        examples=[OpenApiExample('List example', value={'count':1,'next':None,'previous':None,'results':[{'id':1,'first_name':'John','last_name':'Doe','status':'SUSPECTED'}]}, response_only=True)]
+    ),
+    retrieve=extend_schema(
+        description='Retrieve a suspect by id.',
+        responses={200: SuspectSerializer, 404: OpenApiResponse(description='Not found')},
+        examples=[OpenApiExample('Retrieve example', value={'id':1,'first_name':'John','last_name':'Doe','status':'IN_CUSTODY'}, response_only=True)]
+    ),
+    create=extend_schema(
+        description='Create a new suspect record.',
+        request=SuspectSerializer,
+        responses={201: SuspectSerializer, 400: OpenApiResponse(description='Validation error')},
+        examples=[OpenApiExample('Create request', value={'first_name':'John','last_name':'Doe','national_id':'123456789'}, request_only=True), OpenApiExample('Create response', value={'id':1,'first_name':'John','last_name':'Doe'}, response_only=True)]
+    ),
+    update=extend_schema(
+        description='Replace a suspect record.',
+        request=SuspectSerializer,
+        responses={200: SuspectSerializer, 400: OpenApiResponse(description='Validation error')},
+    ),
+    partial_update=extend_schema(
+        description='Partially update a suspect record.',
+        request=SuspectSerializer,
+        responses={200: SuspectSerializer, 400: OpenApiResponse(description='Validation error')},
+    ),
+    destroy=extend_schema(
+        description='Delete a suspect record.',
+        responses={204: None, 404: OpenApiResponse(description='Not found')},
+    ),
+)
+@extend_schema(tags=['Suspects'], description='Manage suspects and interrogation workflow')
 class SuspectViewSet(viewsets.ModelViewSet):
     queryset = Suspect.objects.all()
     serializer_class = SuspectSerializer
@@ -84,6 +119,15 @@ class SuspectViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    arrest = extend_schema(
+        description='Mark a suspect as arrested',
+        responses={200: SuspectSerializer, 400: OpenApiResponse(description='Bad request')},
+        examples=[
+            OpenApiExample('Arrest success', value={'id':1,'status':'IN_CUSTODY'}, response_only=True),
+            OpenApiExample('Arrest error', value={'detail':'Suspect is already in custody.'}, response_only=True),
+        ]
+    )(arrest)
+
     @action(detail=True, methods=['post'], permission_classes=[IsDetectiveOrHigher])
     def record_interrogation_score(self, request, pk=None):
         suspect = self.get_object()
@@ -116,6 +160,19 @@ class SuspectViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    record_interrogation_score = extend_schema(
+        description='Record interrogation probability score for a suspect',
+        request={
+            'type': OpenApiTypes.OBJECT,
+            'properties': {'probability': {'type': 'integer'}, 'notes': {'type': 'string'}}
+        },
+        responses={200: SuspectSerializer, 400: OpenApiResponse(description='Bad request')},
+        examples=[
+            OpenApiExample('Record success', value={'id':1,'detective_probability':7,'sergeant_probability':6}, response_only=True),
+            OpenApiExample('Record error', value={'detail':'Probability must be between 1 and 10.'}, response_only=True),
+        ]
+    )(record_interrogation_score)
+
     @action(detail=True, methods=['post'], permission_classes=[IsCaptainOrHigher])
     def captain_decision(self, request, pk=None):
         suspect = self.get_object()
@@ -144,6 +201,19 @@ class SuspectViewSet(viewsets.ModelViewSet):
             self._create_trial_for_suspect(suspect)
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    captain_decision = extend_schema(
+        description='Captain makes final probability decision and statement',
+        request={
+            'type': OpenApiTypes.OBJECT,
+            'properties': {'final_probability': {'type': 'integer'}, 'statement': {'type': 'string'}}
+        },
+        responses={200: SuspectSerializer, 400: OpenApiResponse(description='Bad request')},
+        examples=[
+            OpenApiExample('Captain decision success', value={'id':1,'captain_probability':8,'captain_statement':'Proceed to trial'}, response_only=True),
+            OpenApiExample('Captain decision error', value={'detail':'Statement is required.'}, response_only=True),
+        ]
+    )(captain_decision)
 
     @action(detail=True, methods=['post'], permission_classes=[IsPoliceChief])
     def chief_review(self, request, pk=None):
@@ -178,3 +248,16 @@ class SuspectViewSet(viewsets.ModelViewSet):
             self._create_trial_for_suspect(suspect)
         serializer = self.get_serializer(suspect)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    chief_review = extend_schema(
+        description='Chief reviews captain decision for level 1 crimes',
+        request={
+            'type': OpenApiTypes.OBJECT,
+            'properties': {'approved': {'type': 'boolean'}, 'comment': {'type': 'string'}}
+        },
+        responses={200: SuspectSerializer, 400: OpenApiResponse(description='Bad request')},
+        examples=[
+            OpenApiExample('Chief approved', value={'id':1,'chief_approved':True,'chief_comment':'Approved for trial'}, response_only=True),
+            OpenApiExample('Chief error', value={'detail':'Field "approved" is required.'}, response_only=True),
+        ]
+    )(chief_review)

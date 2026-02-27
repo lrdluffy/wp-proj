@@ -12,7 +12,42 @@ from core.serializers import (
     CrimeSceneSerializer, ComplaintSerializer
 )
 
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiExample, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
 
+
+@extend_schema_view(
+    list=extend_schema(
+        description='List cases (paginated).',
+        responses={200: OpenApiTypes.OBJECT},
+        examples=[OpenApiExample('List example', value={'count':1,'next':None,'previous':None,'results':[{'id':1,'case_number':'CASE-1','title':'Burglary'}]}, response_only=True)]
+    ),
+    retrieve=extend_schema(
+        description='Retrieve a case by id.',
+        responses={200: CaseSerializer, 404: OpenApiResponse(description='Not found')},
+        examples=[OpenApiExample('Retrieve example', value={'id':1,'case_number':'CASE-1','title':'Burglary','status':'PENDING'}, response_only=True)]
+    ),
+    create=extend_schema(
+        description='Create a new case.',
+        request=CaseCreateSerializer,
+        responses={201: CaseSerializer, 400: OpenApiResponse(description='Validation error')},
+        examples=[OpenApiExample('Create request', value={'title':'Burglary','description':'Break-in at 123 St'}, request_only=True), OpenApiExample('Create response', value={'id':1,'case_number':'CASE-1','title':'Burglary','status':'PENDING'}, response_only=True)]
+    ),
+    update=extend_schema(
+        description='Replace a case.',
+        request=CaseSerializer,
+        responses={200: CaseSerializer, 400: OpenApiResponse(description='Validation error')},
+    ),
+    partial_update=extend_schema(
+        description='Partially update a case.',
+        request=CaseSerializer,
+        responses={200: CaseSerializer, 400: OpenApiResponse(description='Validation error')},
+    ),
+    destroy=extend_schema(
+        description='Delete a case.',
+        responses={204: None, 404: OpenApiResponse(description='Not found')},
+    ),
+)
 class CaseViewSet(viewsets.ModelViewSet):
     serializer_class = CaseSerializer
     permission_classes = [IsAuthenticated]
@@ -50,6 +85,11 @@ class CaseViewSet(viewsets.ModelViewSet):
         serializer.save(created_by=self.request.user)
 
     @action(detail=True, methods=['post'], permission_classes=[IsOfficerOrHigher])
+    @extend_schema(
+        description='Approve a case (officers with sufficient rank).',
+        responses={200: OpenApiTypes.OBJECT, 403: OpenApiTypes.OBJECT},
+        examples=[OpenApiExample('Approve response', value={'status': 'Case approved successfully'}, response_only=True)]
+    )
     def approve(self, request, pk=None):
         """متد تایید پرونده توسط مافوق"""
         case = self.get_object()
@@ -61,6 +101,14 @@ class CaseViewSet(viewsets.ModelViewSet):
         return Response({'detail': 'You do not have permission to approve cases.'}, status=status.HTTP_403_FORBIDDEN)
 
 
+@extend_schema_view(
+    list=extend_schema(description='List complaints (paginated).', responses={200: OpenApiTypes.OBJECT}),
+    retrieve=extend_schema(description='Retrieve a complaint.', responses={200: ComplaintSerializer, 404: OpenApiResponse(description='Not found')}),
+    create=extend_schema(request=ComplaintSerializer, responses={201: ComplaintSerializer, 400: OpenApiResponse(description='Validation error')}),
+    update=extend_schema(request=ComplaintSerializer, responses={200: ComplaintSerializer, 400: OpenApiResponse(description='Validation error')}),
+    partial_update=extend_schema(request=ComplaintSerializer, responses={200: ComplaintSerializer, 400: OpenApiResponse(description='Validation error')}),
+    destroy=extend_schema(responses={204: None, 404: OpenApiResponse(description='Not found')}),
+)
 class ComplaintViewSet(viewsets.ModelViewSet):
     serializer_class = ComplaintSerializer
     permission_classes = [IsAuthenticated]
@@ -78,6 +126,15 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         serializer.save(status=ComplaintStatus.PENDING)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @extend_schema(
+        description='Trainee rejects a complaint and provides feedback.',
+        request={
+            'type': OpenApiTypes.OBJECT,
+            'properties': {'feedback': {'type': 'string'}}
+        },
+        responses={200: OpenApiTypes.OBJECT},
+        examples=[OpenApiExample('Reject response', value={'status': 'Returned to citizen'}, response_only=True)]
+    )
     def reject_by_trainee(self, request, pk=None):
         complaint = self.get_object()
         feedback = request.data.get('feedback', 'No feedback provided.')
@@ -94,6 +151,14 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         return Response({'status': 'Returned to citizen'})
 
     @action(detail=True, methods=['post'], permission_classes=[IsOfficerOrHigher])
+    @extend_schema(
+        description='Officer sends complaint back to trainee with feedback',
+        request={
+            'type': OpenApiTypes.OBJECT,
+            'properties': {'feedback': {'type': 'string'}}
+        },
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def send_back_to_trainee(self, request, pk=None):
         complaint = self.get_object()
         feedback = request.data.get('feedback', 'Defect reported by officer')
@@ -118,6 +183,11 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         return Response({'status': 'Sent to officer for final approval'})
 
     @action(detail=True, methods=['post'], permission_classes=[IsOfficerOrHigher])
+    @extend_schema(
+        description='Approve a complaint and create a linked case.',
+        responses={200: OpenApiTypes.OBJECT},
+        examples=[OpenApiExample('Approve & create', value={'status': 'Approved', 'case_id': 123}, response_only=True)]
+    )
     def approve_and_create_case(self, request, pk=None):
         complaint = self.get_object()
         import uuid
@@ -136,6 +206,14 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         return Response({'status': 'Approved', 'case_id': new_case.id})
 
 
+@extend_schema_view(
+    list=extend_schema(description='List crime scenes.', responses={200: OpenApiTypes.OBJECT}),
+    retrieve=extend_schema(description='Retrieve a crime scene.', responses={200: CrimeSceneSerializer, 404: OpenApiResponse(description='Not found')}),
+    create=extend_schema(request=CrimeSceneSerializer, responses={201: CrimeSceneSerializer, 400: OpenApiResponse(description='Validation error')}),
+    update=extend_schema(request=CrimeSceneSerializer, responses={200: CrimeSceneSerializer, 400: OpenApiResponse(description='Validation error')}),
+    partial_update=extend_schema(request=CrimeSceneSerializer, responses={200: CrimeSceneSerializer, 400: OpenApiResponse(description='Validation error')}),
+    destroy=extend_schema(responses={204: None, 404: OpenApiResponse(description='Not found')}),
+)
 class CrimeSceneViewSet(viewsets.ModelViewSet):
     queryset = CrimeScene.objects.all()
     serializer_class = CrimeSceneSerializer

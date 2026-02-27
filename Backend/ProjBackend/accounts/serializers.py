@@ -45,3 +45,15 @@ class UserDetailsSerializer(UserSerializer):
     class Meta:
         model = User
         fields = UserSerializer.Meta.fields + ['last_login']
+
+
+class LoginSerializer(serializers.Serializer):
+    """Serializer for login requests."""
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    """Serializer for successful login responses."""
+    user = UserSerializer()
+    token = serializers.CharField(read_only=True)
