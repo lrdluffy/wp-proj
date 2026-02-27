@@ -121,6 +121,13 @@ class Payment(models.Model):
         blank=True,
         related_name='payment'
     )
+    suspect = models.ForeignKey(
+        'suspects.Suspect',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payments'
+    )
 
     # Payer information
     payer_name = models.CharField(max_length=127)
@@ -135,7 +142,12 @@ class Payment(models.Model):
         help_text="Payment gateway used (Zarinpal, IDPay, etc.)"
     )
     transaction_id = models.CharField(max_length=127, null=True, blank=True)
-    payment_reference = models.CharField(max_length=127, null=True, blank=True)
+    payment_reference = models.CharField(
+        max_length=127,
+        null=True,
+        blank=True,
+        help_text="Gateway authority or reference code"
+    )
 
     # Timestamps
     initiated_at = models.DateTimeField(auto_now_add=True)

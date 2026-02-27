@@ -13,7 +13,8 @@ import {
   Shield,
   User,
   Gavel,
-  Scale
+  Scale,
+  CreditCard,
 } from 'lucide-react';
 import { type Case, type Suspect, type Trial, CrimeLevel, Role } from '../types';
 
@@ -30,6 +31,8 @@ const CaseDetail: React.FC = () => {
   const [interrogationInputs, setInterrogationInputs] = useState<Record<number, { probability: string; notes: string }>>({});
   const [captainInputs, setCaptainInputs] = useState<Record<number, { final_probability: string; statement: string }>>({});
   const [chiefInputs, setChiefInputs] = useState<Record<number, { approved: string; comment: string }>>({});
+  const [bailAmountInputs, setBailAmountInputs] = useState<Record<number, string>>({});
+  const [bailSavingId, setBailSavingId] = useState<number | null>(null);
   const [newSuspect, setNewSuspect] = useState<{ first_name: string; last_name: string; national_id: string; phone_number: string }>({
     first_name: '',
     last_name: '',
@@ -78,6 +81,47 @@ const CaseDetail: React.FC = () => {
       await fetchData();
       alert('امتیاز بازجویی ثبت شد');
     } catch (err) { alert('خطا در ثبت امتیاز'); }
+  };
+
+  const canSetBail = user?.role === Role.CAPTAIN || user?.role === Role.POLICE_CHIEF;
+
+  const handleSetBailAmount = async (suspect: Suspect) => {
+    const value = bailAmountInputs[suspect.id]?.trim();
+    if (!value) return alert('لطفاً مبلغ وثیقه را وارد کنید.');
+    const amount = Number(value);
+    if (isNaN(amount) || amount <= 0) return alert('مبلغ وثیقه باید عدد مثبت باشد (ریال).');
+    setBailSavingId(suspect.id);
+    try {
+      await apiService.updateSuspect(suspect.id, { bail_amount: value });
+      await fetchData();
+      setBailAmountInputs(prev => ({ ...prev, [suspect.id]: '' }));
+      alert('مبلغ وثیقه ثبت شد');
+    } catch (err) {
+      alert('خطا در ثبت مبلغ وثیقه');
+    } finally {
+      setBailSavingId(null);
+    }
+  };
+
+  const handleStartBailPayment = async (suspect: Suspect) => {
+    if (!suspect.bail_amount) {
+      return alert('مبلغ وثیقه برای این مظنون ثبت نشده است.');
+    }
+    if (suspect.bail_paid) {
+      return alert('وثیقه این مظنون قبلاً پرداخت شده است.');
+    }
+
+    if (!window.confirm(`آیا از شروع پرداخت آنلاین وثیقه به مبلغ ${suspect.bail_amount} ریال برای ${suspect.full_name} مطمئن هستید؟`)) {
+      return;
+    }
+
+    try {
+      const data = await apiService.startBailPayment(suspect.id);
+      window.location.href = data.payment_url;
+    } catch (error) {
+      console.error('Error starting bail payment:', error);
+      alert('خطا در شروع پرداخت آنلاین وثیقه');
+    }
   };
 
   const handleSubmitCaptainDecision = async (suspect: Suspect) => {
@@ -274,6 +318,51 @@ const CaseDetail: React.FC = () => {
               {/* Arrest Button */}
               {!suspect.is_in_custody && ['SERGEANT', 'CAPTAIN', 'POLICE_CHIEF'].includes(user?.role || '') && (
                 <button onClick={() => handleArrestSuspect(suspect)} className="mb-4 bg-red-600 text-white px-3 py-1 rounded text-sm">تایید بازداشت</button>
+              )}
+
+              {/* Set bail amount (Captain / Police Chief) */}
+              {canSetBail && !suspect.bail_paid && (
+                <div className="mt-2 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="font-bold text-sm text-amber-900 mb-2">تعیین مبلغ وثیقه (ریال)</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder={suspect.bail_amount ? `فعلی: ${suspect.bail_amount}` : 'مبلغ به ریال'}
+                      className="border border-amber-300 rounded px-2 py-1 text-sm w-40"
+                      value={bailAmountInputs[suspect.id] ?? ''}
+                      onChange={(e) => setBailAmountInputs(prev => ({ ...prev, [suspect.id]: e.target.value }))}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSetBailAmount(suspect)}
+                      disabled={bailSavingId === suspect.id}
+                      className="bg-amber-600 text-white px-3 py-1 rounded text-sm hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      {bailSavingId === suspect.id ? 'در حال ثبت...' : 'ثبت مبلغ وثیقه'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Bail Payment Section */}
+              {suspect.bail_amount && (
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-gray-700">
+                    مبلغ وثیقه: <span className="font-bold">{suspect.bail_amount}</span> ریال
+                  </span>
+                  {suspect.bail_paid ? (
+                    <span className="text-green-600 font-bold">وثیقه پرداخت شده است</span>
+                  ) : (
+                    <button
+                      onClick={() => handleStartBailPayment(suspect)}
+                      className="flex items-center bg-emerald-600 text-white px-3 py-1 rounded text-xs hover:bg-emerald-700"
+                    >
+                      <CreditCard className="h-3 w-3 ml-1" />
+                      پرداخت آنلاین وثیقه
+                    </button>
+                  )}
+                </div>
               )}
 
               {/* Scoring Section */}
