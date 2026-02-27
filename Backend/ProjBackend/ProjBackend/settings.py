@@ -180,3 +180,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
+
+ZARINPAL_MERCHANT_ID = 'f361fd0b-787f-46fc-a6ae-5c2386071cc1'
+FRONTEND_BASE_URL = 'http://localhost:5173'
