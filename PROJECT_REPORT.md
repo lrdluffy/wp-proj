@@ -469,7 +469,7 @@ class CaseViewSet(viewsets.ModelViewSet):
 
 **تصمیمات تقویت‌کننده:**
 
-
+- یکپارچه‌سازی `drf-spectacular`، افزودن توضیحات به viewها و تولید مستندات Swagger و ReDoc
 - بهبود طراحی واکنش‌گرا برای کاربری بهتر در موبایل.  
 - جداسازی توابع کمکی و کاهش کد تکراری.  
 
@@ -558,6 +558,8 @@ d8cd772 Backend: <feat> add suspect model, serializers and automated trial creat
 f197211 Frontend: <feat> integrate suspect management UI and interrogation scoring system
 2adea00 Merge remote-tracking branch 'origin/master'
 9cec08f Backend: <fix> fix permission bug for police officer in case view
+e682536 documentation/Add project report to repository
+1620177 documenation/add OpenAPI documentation using drf-spectacular
 ```
 
 
