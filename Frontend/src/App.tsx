@@ -22,6 +22,7 @@ import Admin from './pages/Admin';
 import EvidenceList from './pages/EvidenceList';
 import EvidenceCreate from './pages/EvidenceCreate';
 import EvidenceDetail from './pages/EvidenceDetail'; // ایمپورت صفحه جزئیات
+import PaymentResult from './pages/PaymentResult';
 
 const RoleBasedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
   const { user } = useAuth();
@@ -43,6 +44,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/payment-result" element={<PaymentResult />} />
 
           <Route
             element={

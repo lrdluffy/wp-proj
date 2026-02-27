@@ -199,6 +199,11 @@ class ApiService {
     return response.data;
   }
 
+  async updateSuspect(suspectId: number, data: Partial<Suspect>): Promise<Suspect> {
+    const response = await this.api.patch<Suspect>(`/suspects/${suspectId}/`, data);
+    return response.data;
+  }
+
   async arrestSuspect(suspectId: number): Promise<Suspect> {
     const response = await this.api.post<Suspect>(`/suspects/${suspectId}/arrest/`);
     return response.data;
@@ -227,10 +232,19 @@ class ApiService {
     const response = await this.api.post<Suspect>(`/suspects/${suspectId}/chief_review/`, payload);
     return response.data;
   }
+  
+  async startBailPayment(suspectId: number): Promise<{ payment_url: string; payment_number: string; authority: string }> {
+    const response = await this.api.post<{ payment_url: string; payment_number: string; authority: string }>(
+      '/payments/zarinpal/start/',
+      { suspect_id: suspectId },
+    );
+    return response.data;
+  }
+
   async getTrials(params?: any): Promise<PaginatedResponse<Trial>> {
-  const response = await this.api.get<PaginatedResponse<Trial>>('/trials/', { params });
-  return response.data;
-}
+    const response = await this.api.get<PaginatedResponse<Trial>>('/trials/', { params });
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

@@ -150,6 +150,8 @@ export interface Suspect {
   phone_number?: string | null;
   arrest_date: string | null;
   is_in_custody: boolean;
+  bail_amount?: string | null;
+  bail_paid?: boolean;
   sergeant_probability?: number | null;
   sergeant_notes?: string | null;
   sergeant_officer?: number | null;
